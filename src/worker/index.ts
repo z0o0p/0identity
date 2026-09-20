@@ -6,6 +6,7 @@ import type { HealthResponse } from "../shared/health";
 import { DurableHistoryService } from "../storage/durable-history-service";
 import { createAssessmentRecord } from "../storage/sql-assessment-repository";
 import type { AssessmentHistoryService, HistoryNamespace, HistorySource } from "../storage/types";
+import type { IdentityNetworkContext } from "../identity/features";
 import { authorizeRequest, type AccessEnv, type AccessTokenVerifier } from "./access";
 
 export { IdentityHistory } from "../storage/identity-history";
@@ -56,6 +57,16 @@ function historyService(env: WorkerEnv | undefined, dependencies: WorkerDependen
   if (dependencies.history) return dependencies.history;
   if (env?.IDENTITY_HISTORY) return new DurableHistoryService({ IDENTITY_HISTORY: env.IDENTITY_HISTORY });
   throw new HistoryUnavailableError("Durable Object binding is missing.");
+}
+
+function requestNetworkContext(request: Request): IdentityNetworkContext | undefined {
+  const country = typeof request.cf?.country === "string" ? request.cf.country : undefined;
+  const asn = typeof request.cf?.asn === "number" ? request.cf.asn : undefined;
+  if (!country && asn === undefined) return undefined;
+  return {
+    ...(country ? { country } : {}),
+    ...(asn !== undefined ? { asn } : {}),
+  };
 }
 
 function parseHistoryQuery(url: URL): { source: HistorySource; limit: number } {
@@ -112,7 +123,7 @@ export function createWorker(dependencies: WorkerDependencies = {}) {
           const createdAt = (dependencies.now?.() ?? new Date()).toISOString();
           if (pathname === "/api/v1/simulate") {
             const simulation = await simulateRequest(request, dependencies.createId);
-            await withHistory(() => history.saveAssessment(
+            const stored = await withHistory(() => history.assessAndSave(
               HISTORY_NAMESPACE.simulation,
               createAssessmentRecord(
                 simulation.response,
@@ -120,19 +131,29 @@ export function createWorker(dependencies: WorkerDependencies = {}) {
                 createdAt,
                 "simulation",
                 simulation.profile,
+                simulation.networkContext,
               ),
+              (dependencies.createId ?? (prefix => `${prefix}_${crypto.randomUUID()}`))("0id"),
             ));
-            return Response.json(simulation.response, {
+            return Response.json({ ...simulation.response, identity: stored.identity }, {
               headers: { ...JSON_HEADERS, "X-Request-Id": requestId },
             });
           }
 
           const assessment = await assessRequest(request, dependencies.createId);
-          await withHistory(() => history.saveAssessment(
+          const stored = await withHistory(() => history.assessAndSave(
             HISTORY_NAMESPACE.live,
-            createAssessmentRecord(assessment.response, assessment.signals, createdAt, "live"),
+            createAssessmentRecord(
+              assessment.response,
+              assessment.signals,
+              createdAt,
+              "live",
+              undefined,
+              requestNetworkContext(request),
+            ),
+            (dependencies.createId ?? (prefix => `${prefix}_${crypto.randomUUID()}`))("0id"),
           ));
-          return Response.json(assessment.response, {
+          return Response.json({ ...assessment.response, identity: stored.identity }, {
             headers: { ...JSON_HEADERS, "X-Request-Id": requestId },
           });
         }

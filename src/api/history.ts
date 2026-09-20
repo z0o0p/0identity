@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { assessmentResponseSchema } from "./assessment";
+import { assessmentResponseSchema, subjectIdentifierSchema } from "./assessment";
 import { clientSignalsSchema } from "../signals/schema";
 import { SIMULATION_PROFILES } from "../simulator/profiles";
 import { HISTORY_SOURCES } from "../storage/types";
@@ -17,6 +17,9 @@ export const sessionSummarySchema = z.strictObject({
   humanScore: z.number().min(0).max(10),
   humanConfidence: z.number().min(0).max(1),
   flagCodes: z.array(z.string().min(1).max(80)).max(32),
+  subjectId: subjectIdentifierSchema.nullable(),
+  matchStatus: z.enum(["matched", "uncertain", "new", "unavailable"]),
+  continuityConfidence: z.number().min(0).max(1).nullable(),
 });
 
 export const sessionListResponseSchema = z.strictObject({

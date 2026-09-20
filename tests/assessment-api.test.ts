@@ -20,7 +20,7 @@ function assessmentRequest(body: unknown, headers: Record<string, string> = {}):
 }
 
 describe("assessment API", () => {
-  it("scores a valid request and keeps identity continuity unavailable", async () => {
+  it("scores and enrolls a valid request as a new anonymous subject", async () => {
     const response = await worker.fetch(assessmentRequest(
       { signals: normalHumanSignals },
       { "User-Agent": normalHumanSignals.environment!.userAgent },
@@ -37,9 +37,9 @@ describe("assessment API", () => {
     expect(parsed.sessionId).toBe("sess_test-id");
     expect(parsed.human.score).toBeGreaterThanOrEqual(8);
     expect(parsed.identity).toMatchObject({
-      status: "unavailable",
-      subjectId: null,
-      continuityConfidence: null,
+      matchStatus: "new",
+      subjectId: "0id_test-id",
+      continuityConfidence: 0,
     });
   });
 

@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { buildAssessment, type AssessmentIdFactory, type ProcessedAssessment } from "./assess";
 import { parseJsonRequest } from "./request";
-import { generateSimulation, SIMULATION_PROFILES, type SimulationProfile } from "../simulator/profiles";
+import {
+  generateSimulation,
+  SIMULATION_PROFILES,
+  simulationNetworkContext,
+  type SimulationProfile,
+} from "../simulator/profiles";
+import type { IdentityNetworkContext } from "../identity/features";
 
 export const simulationRequestSchema = z.strictObject({
   profile: z.enum(SIMULATION_PROFILES),
@@ -9,6 +15,7 @@ export const simulationRequestSchema = z.strictObject({
 
 export interface ProcessedSimulation extends ProcessedAssessment {
   profile: SimulationProfile;
+  networkContext: IdentityNetworkContext;
 }
 
 export async function simulateRequest(
@@ -22,5 +29,5 @@ export async function simulateRequest(
   );
   const signals = generateSimulation(body.profile);
   const processed = buildAssessment(signals, signals.environment?.userAgent, createId);
-  return { ...processed, profile: body.profile };
+  return { ...processed, profile: body.profile, networkContext: simulationNetworkContext(body.profile) };
 }

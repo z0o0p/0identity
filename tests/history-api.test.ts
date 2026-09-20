@@ -69,6 +69,29 @@ describe("persisted assessment history API", () => {
     expect(crossNamespace.status).toBe(404);
   });
 
+  it("enrolls, links, and conservatively rejects returning simulation scenarios", async () => {
+    const worker = createTestWorker();
+    const run = async (profile: string) => assessmentResponseSchema.parse(await (
+      await worker.fetch(jsonPost("/api/v1/simulate", { profile }))
+    ).json());
+
+    const initial = await run("normal-human");
+    const sameDevice = await run("returning-human-same-device");
+    const newNetwork = await run("returning-human-new-network");
+    const newDevice = await run("possible-returning-human-new-device");
+
+    expect(initial.identity).toMatchObject({ matchStatus: "new" });
+    expect(sameDevice.identity).toMatchObject({
+      matchStatus: "matched",
+      subjectId: initial.identity.subjectId,
+    });
+    expect(newNetwork.identity).toMatchObject({
+      matchStatus: "matched",
+      subjectId: initial.identity.subjectId,
+    });
+    expect(newDevice.identity).toMatchObject({ matchStatus: "uncertain", subjectId: null });
+  });
+
   it.each([
     ["unsupported source", "/api/v1/sessions?source=other"],
     ["zero limit", "/api/v1/sessions?limit=0"],
@@ -97,7 +120,7 @@ describe("persisted assessment history API", () => {
   it("fails closed when persistence is unavailable", async () => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const history: AssessmentHistoryService = {
-      saveAssessment: () => Promise.reject(new Error("database details")),
+      assessAndSave: () => Promise.reject(new Error("database details")),
       listSessions: () => Promise.reject(new Error("database details")),
       getSession: () => Promise.reject(new Error("database details")),
     };

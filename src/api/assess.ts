@@ -6,7 +6,7 @@ import type { ClientSignals } from "../signals/schema";
 
 export { MAX_JSON_BODY_BYTES as MAX_ASSESSMENT_BODY_BYTES } from "./request";
 
-export type AssessmentIdFactory = (prefix: "asm" | "sess") => string;
+export type AssessmentIdFactory = (prefix: "asm" | "sess" | "0id") => string;
 
 export interface ProcessedAssessment {
   response: AssessmentResponse;
@@ -31,7 +31,7 @@ export function buildAssessment(
         status: "unavailable",
         subjectId: null,
         continuityConfidence: null,
-        reason: "Identity continuity is not implemented in this prototype.",
+        reason: "Identity continuity has not yet been evaluated for this assessment.",
       },
     },
   };

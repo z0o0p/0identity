@@ -81,7 +81,10 @@ export function SessionHistory({ refreshKey, onSelect }: SessionHistoryProps) {
               >
                 <span>
                   <strong>{session.simulationProfile ? SIMULATION_PROFILE_DETAILS[session.simulationProfile].label : "Simulation"}</strong>
-                  <small>{displayTime(session.createdAt)} · {session.flagCodes.length} flag{session.flagCodes.length === 1 ? "" : "s"}</small>
+                  <small>
+                    {displayTime(session.createdAt)} · {session.flagCodes.length} flag{session.flagCodes.length === 1 ? "" : "s"}
+                    {session.matchStatus !== "unavailable" && ` · ${session.matchStatus} subject`}
+                  </small>
                 </span>
                 <span className="history-score">
                   <strong>{session.humanScore.toFixed(1)}</strong>

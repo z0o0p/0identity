@@ -2,7 +2,7 @@ import { DurableObject } from "cloudflare:workers";
 import { CloudflareSqlDatabase } from "./cloudflare-sql";
 import { applyStorageMigrations } from "./migrations";
 import { SqlAssessmentRepository } from "./sql-assessment-repository";
-import type { AssessmentRecord, SessionDetail, SessionSummary } from "./types";
+import type { AssessmentRecord, SessionDetail, SessionSummary, SubjectProfile } from "./types";
 
 export class IdentityHistory extends DurableObject<Cloudflare.Env> {
   private readonly repository: SqlAssessmentRepository;
@@ -19,8 +19,8 @@ export class IdentityHistory extends DurableObject<Cloudflare.Env> {
     });
   }
 
-  saveAssessment(record: AssessmentRecord): void {
-    this.repository.saveAssessment(record);
+  assessAndSave(record: AssessmentRecord, proposedSubjectId: string): AssessmentRecord {
+    return this.repository.assessAndSave(record, proposedSubjectId);
   }
 
   listSessions(limit: number): SessionSummary[] {
@@ -29,5 +29,9 @@ export class IdentityHistory extends DurableObject<Cloudflare.Env> {
 
   getSession(sessionId: string): SessionDetail | null {
     return this.repository.getSession(sessionId);
+  }
+
+  getSubject(subjectId: string): SubjectProfile | null {
+    return this.repository.getSubject(subjectId);
   }
 }

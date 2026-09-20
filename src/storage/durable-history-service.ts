@@ -14,8 +14,12 @@ interface DurableHistoryEnv {
 export class DurableHistoryService implements AssessmentHistoryService {
   constructor(private readonly env: DurableHistoryEnv) {}
 
-  async saveAssessment(namespace: HistoryNamespace, record: AssessmentRecord): Promise<void> {
-    await this.env.IDENTITY_HISTORY.getByName(namespace).saveAssessment(record);
+  async assessAndSave(
+    namespace: HistoryNamespace,
+    record: AssessmentRecord,
+    proposedSubjectId: string,
+  ): Promise<AssessmentRecord> {
+    return this.env.IDENTITY_HISTORY.getByName(namespace).assessAndSave(record, proposedSubjectId);
   }
 
   async listSessions(namespace: HistoryNamespace, limit: number): Promise<SessionSummary[]> {

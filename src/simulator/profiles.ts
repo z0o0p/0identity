@@ -1,9 +1,13 @@
 import type { ClientSignals } from "../signals/schema";
+import type { IdentityNetworkContext } from "../identity/features";
 
 export const SIMULATION_PROFILES = [
   "normal-human",
   "regular-scripted-bot",
   "headless-automation",
+  "returning-human-same-device",
+  "returning-human-new-network",
+  "possible-returning-human-new-device",
   "low-information-session",
 ] as const;
 
@@ -30,6 +34,21 @@ export const SIMULATION_PROFILE_DETAILS: Record<SimulationProfile, SimulationPro
     label: "Headless automation",
     description: "Regular behavior plus contradictory automation and rendering signals.",
     seed: 30_041,
+  },
+  "returning-human-same-device": {
+    label: "Returning human · same device",
+    description: "Human-like behavior from the normal-human device and network context.",
+    seed: 10_037,
+  },
+  "returning-human-new-network": {
+    label: "Returning human · new network",
+    description: "Similar behavior and device evidence observed from a changed coarse network.",
+    seed: 10_039,
+  },
+  "possible-returning-human-new-device": {
+    label: "Possible return · new device",
+    description: "Similar behavior with substantially changed device evidence; expected to remain uncertain.",
+    seed: 10_043,
   },
   "low-information-session": {
     label: "Low-information session",
@@ -170,6 +189,27 @@ function lowInformationSession(): ClientSignals {
   };
 }
 
+function possibleReturningHumanNewDevice(random: () => number): ClientSignals {
+  const signals = normalHuman(random);
+  return {
+    ...signals,
+    environment: {
+      ...signals.environment!,
+      browserFamily: "firefox",
+      platformFamily: "android",
+      userAgent: "Mozilla/5.0 (Linux; Android 16; Mobile; rv:141.0) Gecko/141.0 Firefox/141.0",
+      screen: { width: 412, height: 915 },
+      viewport: { width: 412, height: 840 },
+      devicePixelRatio: 3,
+      hardwareConcurrency: 4,
+      deviceMemoryGb: 4,
+      maxTouchPoints: 5,
+      capabilities: { touchEvents: true, webgl: true, chromeRuntime: false, webdriver: false },
+      webgl: { vendor: "Qualcomm", renderer: "Adreno" },
+    },
+  };
+}
+
 function alignWithRuntimeUserAgent(signals: ClientSignals, userAgent: string): ClientSignals {
   if (!signals.environment) return signals;
   const normalized = userAgent.toLowerCase();
@@ -223,10 +263,22 @@ export function generateSimulation(
       break;
     case "headless-automation":
       return headlessAutomation(random);
+    case "returning-human-same-device":
+    case "returning-human-new-network":
+      signals = normalHuman(random);
+      break;
+    case "possible-returning-human-new-device":
+      return possibleReturningHumanNewDevice(random);
     case "low-information-session":
       signals = lowInformationSession();
       break;
   }
 
   return runtimeUserAgent ? alignWithRuntimeUserAgent(signals, runtimeUserAgent) : signals;
+}
+
+export function simulationNetworkContext(profile: SimulationProfile): IdentityNetworkContext {
+  return profile === "returning-human-new-network"
+    ? { country: "GB", asn: 64_520 }
+    : { country: "IN", asn: 64_512 };
 }

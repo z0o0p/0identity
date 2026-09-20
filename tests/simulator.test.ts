@@ -45,4 +45,16 @@ describe("seeded simulator", () => {
     expect(headless.score).toBeLessThan(bot.score);
     expect(lowInformation.confidence).toBeLessThan(human.confidence);
   });
+
+  it("keeps returning profiles signal-based and reserves uncertainty for changed devices", () => {
+    const baseline = generateSimulation("normal-human");
+    const sameDevice = generateSimulation("returning-human-same-device");
+    const newNetwork = generateSimulation("returning-human-new-network");
+    const newDevice = generateSimulation("possible-returning-human-new-device");
+
+    expect(sameDevice.environment).toEqual(baseline.environment);
+    expect(newNetwork.environment).toEqual(baseline.environment);
+    expect(sameDevice.behavior).not.toEqual(baseline.behavior);
+    expect(newDevice.environment).not.toEqual(baseline.environment);
+  });
 });

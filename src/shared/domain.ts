@@ -39,3 +39,26 @@ export interface HumanLikelihoodAssessment {
   flags: RiskFlag[];
   scoringVersion: string;
 }
+
+export type IdentityEvidenceClass = "behavior" | "device" | "network" | "context";
+
+export interface IdentityEvidence {
+  evidenceClass: IdentityEvidenceClass;
+  similarity: number;
+  quality: number;
+  weight: number;
+  comparableFeatures: number;
+  explanation: string;
+}
+
+interface IdentityMatchFields {
+  continuityConfidence: number;
+  evidence: IdentityEvidence[];
+  reason: string;
+}
+
+export type IdentityMatch = IdentityMatchFields & (
+  | { subjectId: SubjectId; matchStatus: "matched" }
+  | { subjectId: null; matchStatus: "uncertain" }
+  | { subjectId: null; matchStatus: "new" }
+);

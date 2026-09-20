@@ -27,6 +27,7 @@ export function AssessmentResult({ assessment, profile }: AssessmentResultProps)
     const component = assessment.human.components[name];
     return component ? [{ name, component }] : [];
   });
+  const identity = assessment.identity;
 
   return (
     <article className="result" aria-labelledby="result-title">
@@ -80,9 +81,21 @@ export function AssessmentResult({ assessment, profile }: AssessmentResultProps)
         )}
       </section>
 
-      <p className="identity-unavailable">
-        <strong>Subject continuity unavailable.</strong> No anonymous subject match was attempted.
-      </p>
+      {"status" in identity ? (
+        <p className="identity-result">
+          <strong>Subject continuity unavailable.</strong> {identity.reason}
+        </p>
+      ) : (
+        <section className="identity-result" aria-labelledby="identity-title">
+          <div>
+            <h3 id="identity-title">Anonymous subject continuity</h3>
+            <span className={`identity-status identity-status-${identity.matchStatus}`}>{identity.matchStatus}</span>
+          </div>
+          <p>{identity.reason}</p>
+          {identity.subjectId && <code>{identity.subjectId}</code>}
+          <small>{Math.round(identity.continuityConfidence * 100)}% continuity confidence</small>
+        </section>
+      )}
     </article>
   );
 }
