@@ -58,9 +58,15 @@ export interface AssessmentHistoryService {
   ): Promise<AssessmentRecord>;
   listSessions(namespace: HistoryNamespace, limit: number): Promise<SessionSummary[]>;
   getSession(namespace: HistoryNamespace, sessionId: string): Promise<SessionDetail | null>;
+  getSubject(namespace: HistoryNamespace, subjectId: string): Promise<SubjectProfile | null>;
   getOverview(namespace: HistoryNamespace): Promise<DashboardOverview>;
   listSubjectSessions(namespace: HistoryNamespace, subjectId: string, limit: number): Promise<SessionSummary[]>;
 }
+
+export type AssessmentHistoryReader = Pick<
+  AssessmentHistoryService,
+  "getSession" | "getSubject" | "listSubjectSessions"
+>;
 
 export interface SubjectProfile {
   subjectId: string;

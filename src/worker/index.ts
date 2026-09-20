@@ -1,4 +1,5 @@
 import { assessRequest, type AssessmentIdFactory } from "../api/assess";
+import { routeAgentRequest } from "agents";
 import { subjectIdentifierSchema } from "../api/assessment";
 import { historySourceSchema, sessionIdentifierSchema } from "../api/history";
 import { ApiRequestError } from "../api/request";
@@ -9,16 +10,21 @@ import { createAssessmentRecord } from "../storage/sql-assessment-repository";
 import type { AssessmentHistoryService, HistoryNamespace, HistorySource } from "../storage/types";
 import type { IdentityNetworkContext } from "../identity/features";
 import { authorizeRequest, type AccessEnv, type AccessTokenVerifier } from "./access";
+import { investigationScopeFromPath } from "../agents/investigation-scope";
 
 export { IdentityHistory } from "../storage/identity-history";
+export { InvestigationAgent } from "../agents/investigation-agent";
 
-type WorkerEnv = AccessEnv & Partial<Pick<Cloudflare.Env, "IDENTITY_HISTORY">>;
+type WorkerEnv = AccessEnv & Partial<Pick<Cloudflare.Env, "AI" | "IDENTITY_HISTORY" | "InvestigationAgent">>;
+
+type AgentRouter = (request: Request, env: WorkerEnv) => Promise<Response | null>;
 
 interface WorkerDependencies {
   verifyAccessToken?: AccessTokenVerifier;
   createId?: AssessmentIdFactory;
   history?: AssessmentHistoryService;
   now?: () => Date;
+  routeAgent?: AgentRouter;
 }
 
 class HistoryUnavailableError extends Error {
@@ -127,6 +133,17 @@ export function createWorker(dependencies: WorkerDependencies = {}) {
       const { pathname } = url;
 
       try {
+        if (pathname.startsWith("/agents/investigation-agent/")) {
+          if (!investigationScopeFromPath(pathname)) {
+            return errorResponse(400, "invalid_investigation_scope", "Investigation scope is invalid.", requestId);
+          }
+          if (!env?.InvestigationAgent) {
+            throw new HistoryUnavailableError("Investigation Agent binding is missing.");
+          }
+          const routed = await (dependencies.routeAgent ?? routeAgentRequest)(request, env);
+          return routed ?? errorResponse(404, "not_found", "Route not found.", requestId);
+        }
+
         if (pathname === "/api/v1/assess" || pathname === "/api/v1/simulate") {
           if (request.method !== "POST") {
             return errorResponse(405, "method_not_allowed", "Use POST.", requestId, { Allow: "POST" });

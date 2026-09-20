@@ -3,6 +3,9 @@
   "name": "0identity",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-09-19",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "workers_dev": false,
   "preview_urls": false,
   "observability": {
@@ -23,6 +26,10 @@
       {
         "name": "IDENTITY_HISTORY",
         "class_name": "IdentityHistory"
+      },
+      {
+        "name": "InvestigationAgent",
+        "class_name": "InvestigationAgent"
       }
     ]
   },
@@ -32,13 +39,24 @@
       "new_sqlite_classes": [
         "IdentityHistory"
       ]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": [
+        "InvestigationAgent"
+      ]
     }
   ],
+  "ai": {
+    "binding": "AI",
+    "remote": true
+  },
   "assets": {
     "not_found_handling": "single-page-application",
     "run_worker_first": [
       "/api",
-      "/api/*"
+      "/api/*",
+      "/agents/*"
     ]
   }
 }

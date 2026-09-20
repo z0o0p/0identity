@@ -103,6 +103,11 @@ export class MemoryHistoryService implements AssessmentHistoryService {
     };
   }
 
+  async getSubject(namespace: HistoryNamespace, subjectId: string): Promise<SubjectProfile | null> {
+    const subject = this.subjects.get(namespace)?.get(subjectId);
+    return subject ? structuredClone(subject) : null;
+  }
+
   async getOverview(namespace: HistoryNamespace) {
     const records = [...(this.records.get(namespace)?.values() ?? [])];
     return {

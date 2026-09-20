@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { DashboardOverview } from "../../src/api/dashboard";
 import type { SessionDetailResponse, SessionListResponse } from "../../src/api/history";
 import type { HistorySource } from "../../src/storage/types";
@@ -17,6 +17,11 @@ import {
 import { OverviewCards } from "./OverviewCards";
 import { SessionComparison } from "./SessionComparison";
 import { SessionInspector } from "./SessionInspector";
+
+const InvestigationChat = lazy(async () => {
+  const module = await import("./InvestigationChat");
+  return { default: module.InvestigationChat };
+});
 
 interface DashboardProps {
   refreshKey: number;
@@ -240,7 +245,18 @@ export function Dashboard({ refreshKey }: DashboardProps) {
       </div>
 
       {comparison.length === 2 && <SessionComparison sessions={[comparison[0]!, comparison[1]!]} />}
-      {selected && <SessionInspector session={selected} relatedSessions={relatedSessions} />}
+      {selected && (
+        <>
+          <SessionInspector session={selected} relatedSessions={relatedSessions} />
+          <Suspense fallback={<p className="dashboard-message">Loading investigation assistant…</p>}>
+            <InvestigationChat
+              key={`${source}:${selected.sessionId}`}
+              source={source}
+              sessionId={selected.sessionId}
+            />
+          </Suspense>
+        </>
+      )}
     </section>
   );
 }

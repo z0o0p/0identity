@@ -123,6 +123,7 @@ describe("persisted assessment history API", () => {
       assessAndSave: () => Promise.reject(new Error("database details")),
       listSessions: () => Promise.reject(new Error("database details")),
       getSession: () => Promise.reject(new Error("database details")),
+      getSubject: () => Promise.reject(new Error("database details")),
       getOverview: () => Promise.reject(new Error("database details")),
       listSubjectSessions: () => Promise.reject(new Error("database details")),
     };

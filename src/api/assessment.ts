@@ -2,7 +2,7 @@ import { z } from "zod";
 import { HUMAN_COMPONENT_NAMES } from "../shared/domain";
 import { clientSignalsSchema } from "../signals/schema";
 
-const riskFlagCodeSchema = z.enum([
+export const riskFlagCodeSchema = z.enum([
   "browser_platform_mismatch",
   "browser_user_agent_mismatch",
   "unexpected_api_support",
@@ -14,7 +14,7 @@ const riskFlagCodeSchema = z.enum([
   "highly_regular_keyboard",
 ]);
 
-const componentAssessmentSchema = z.strictObject({
+export const componentAssessmentSchema = z.strictObject({
   score: z.number().min(0).max(10),
   confidence: z.number().min(0).max(1),
   evidenceCount: z.number().int().min(0),
@@ -27,6 +27,13 @@ const identityEvidenceSchema = z.strictObject({
   weight: z.number().min(0).max(1),
   comparableFeatures: z.number().int().min(1).max(64),
   explanation: z.string().min(1).max(240),
+});
+
+export const riskFlagSchema = z.strictObject({
+  code: riskFlagCodeSchema,
+  category: z.enum(["behavior", "environment"]),
+  severity: z.enum(["low", "medium", "high"]),
+  explanation: z.string().min(1),
 });
 
 export const subjectIdentifierSchema = z.string().regex(/^0id_[A-Za-z0-9-]{1,64}$/);
@@ -72,12 +79,7 @@ export const assessmentResponseSchema = z.strictObject({
     score: z.number().min(0).max(10),
     confidence: z.number().min(0).max(1),
     components: z.partialRecord(z.enum(HUMAN_COMPONENT_NAMES), componentAssessmentSchema),
-    flags: z.array(z.strictObject({
-      code: riskFlagCodeSchema,
-      category: z.enum(["behavior", "environment"]),
-      severity: z.enum(["low", "medium", "high"]),
-      explanation: z.string().min(1),
-    })),
+    flags: z.array(riskFlagSchema),
     scoringVersion: z.string().min(1),
   }),
   identity: identityAssessmentSchema,
