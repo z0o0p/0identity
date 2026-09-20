@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { isHealthResponse } from "../src/shared/health";
 import { Simulator } from "./components/Simulator";
+import { Dashboard } from "./components/Dashboard";
 
 type Connection = "checking" | "connected" | "unavailable";
 
 export function App() {
   const [connection, setConnection] = useState<Connection>("checking");
   const [attempt, setAttempt] = useState(0);
+  const [dashboardVersion, setDashboardVersion] = useState(0);
   const year = new Date().getFullYear();
 
   useEffect(() => {
@@ -55,7 +57,8 @@ export function App() {
           <h1 id="title" className="editorial">Are you human?</h1>
           <p className="lede">0identity helps developers assess whether an interaction appears human and, independently, whether an anonymous subject may be continuing across sessions.</p>
         </section>
-        <Simulator />
+        <Simulator onAssessmentComplete={() => setDashboardVersion(value => value + 1)} />
+        <Dashboard refreshKey={dashboardVersion} />
       </div>
       <footer className="connection" aria-label="Application status and copyright">
         <div className="connection-footer">

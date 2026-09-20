@@ -1,4 +1,5 @@
 import { assessRequest, type AssessmentIdFactory } from "../api/assess";
+import { subjectIdentifierSchema } from "../api/assessment";
 import { historySourceSchema, sessionIdentifierSchema } from "../api/history";
 import { ApiRequestError } from "../api/request";
 import { simulateRequest } from "../api/simulation";
@@ -89,6 +90,18 @@ function parseHistoryQuery(url: URL): { source: HistorySource; limit: number } {
   return { source: sourceResult.data, limit };
 }
 
+function parseOverviewQuery(url: URL): HistorySource {
+  for (const key of url.searchParams.keys()) {
+    if (key !== "source") throw new ApiRequestError(400, "invalid_query", "Overview query parameters are invalid.");
+  }
+  if (url.searchParams.getAll("source").length > 1) {
+    throw new ApiRequestError(400, "invalid_query", "Overview query parameters must not be repeated.");
+  }
+  const source = historySourceSchema.safeParse(url.searchParams.get("source") ?? "simulation");
+  if (!source.success) throw new ApiRequestError(400, "invalid_query", "Overview source is invalid.");
+  return source.data;
+}
+
 async function withHistory<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
@@ -165,6 +178,35 @@ export function createWorker(dependencies: WorkerDependencies = {}) {
           const { source, limit } = parseHistoryQuery(url);
           const history = historyService(env, dependencies);
           const sessions = await withHistory(() => history.listSessions(HISTORY_NAMESPACE[source], limit));
+          return Response.json({ sessions }, { headers: { ...JSON_HEADERS, "X-Request-Id": requestId } });
+        }
+
+        if (pathname === "/api/v1/overview") {
+          if (request.method !== "GET") {
+            return errorResponse(405, "method_not_allowed", "Use GET.", requestId, { Allow: "GET" });
+          }
+          const source = parseOverviewQuery(url);
+          const history = historyService(env, dependencies);
+          const overview = await withHistory(() => history.getOverview(HISTORY_NAMESPACE[source]));
+          return Response.json(overview, { headers: { ...JSON_HEADERS, "X-Request-Id": requestId } });
+        }
+
+        const subjectSessionsMatch = pathname.match(/^\/api\/v1\/subjects\/([^/]+)\/sessions$/);
+        if (subjectSessionsMatch) {
+          if (request.method !== "GET") {
+            return errorResponse(405, "method_not_allowed", "Use GET.", requestId, { Allow: "GET" });
+          }
+          const identifier = subjectIdentifierSchema.safeParse(subjectSessionsMatch[1]);
+          if (!identifier.success) {
+            return errorResponse(400, "invalid_identifier", "Subject identifier is invalid.", requestId);
+          }
+          const { source, limit } = parseHistoryQuery(url);
+          const history = historyService(env, dependencies);
+          const sessions = await withHistory(() => history.listSubjectSessions(
+            HISTORY_NAMESPACE[source],
+            identifier.data,
+            limit,
+          ));
           return Response.json({ sessions }, { headers: { ...JSON_HEADERS, "X-Request-Id": requestId } });
         }
 

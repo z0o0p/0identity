@@ -7,19 +7,21 @@ import {
 } from "../../src/simulator/profiles";
 import { submitSimulation } from "../lib/assessment";
 import { AssessmentResult } from "./AssessmentResult";
-import { SessionHistory } from "./SessionHistory";
 
 interface CompletedAssessment {
   assessment: AssessmentResponse;
   profile: SimulationProfile;
 }
 
-export function Simulator() {
+interface SimulatorProps {
+  onAssessmentComplete?: () => void;
+}
+
+export function Simulator({ onAssessmentComplete }: SimulatorProps) {
   const [selectedProfile, setSelectedProfile] = useState<SimulationProfile>("normal-human");
   const [completed, setCompleted] = useState<CompletedAssessment>();
   const [status, setStatus] = useState<"idle" | "running" | "error">("idle");
   const [error, setError] = useState<string>();
-  const [historyVersion, setHistoryVersion] = useState(0);
   const activeRequest = useRef<AbortController | undefined>(undefined);
 
   useEffect(() => () => activeRequest.current?.abort(), []);
@@ -34,7 +36,7 @@ export function Simulator() {
     try {
       const assessment = await submitSimulation(selectedProfile, controller.signal);
       setCompleted({ assessment, profile: selectedProfile });
-      setHistoryVersion(value => value + 1);
+      onAssessmentComplete?.();
       setStatus("idle");
     } catch (cause) {
       if (controller.signal.aborted) return;
@@ -93,10 +95,6 @@ export function Simulator() {
           )}
         </div>
       </div>
-      <SessionHistory
-        refreshKey={historyVersion}
-        onSelect={(assessment, profile) => setCompleted({ assessment, profile })}
-      />
     </section>
   );
 }

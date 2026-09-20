@@ -1,5 +1,4 @@
 import { assessmentResponseSchema, type AssessmentResponse } from "../../src/api/assessment";
-import { sessionDetailSchema, sessionListResponseSchema, type SessionDetailResponse } from "../../src/api/history";
 import type { SimulationProfile } from "../../src/simulator/profiles";
 
 function apiErrorMessage(value: unknown): string | undefined {
@@ -28,17 +27,4 @@ export async function submitSimulation(profile: SimulationProfile, signal: Abort
   const parsed = assessmentResponseSchema.safeParse(body);
   if (!parsed.success) throw new Error("The Worker returned an unexpected assessment response.");
   return parsed.data;
-}
-
-export async function getSimulationHistory(signal: AbortSignal) {
-  const response = await fetch("/api/v1/sessions?source=simulation&limit=12", { cache: "no-store", signal });
-  return sessionListResponseSchema.parse(await responseBody(response)).sessions;
-}
-
-export async function getSimulationSession(sessionId: string, signal: AbortSignal): Promise<SessionDetailResponse> {
-  const response = await fetch(`/api/v1/sessions/${encodeURIComponent(sessionId)}?source=simulation`, {
-    cache: "no-store",
-    signal,
-  });
-  return sessionDetailSchema.parse(await responseBody(response));
 }

@@ -102,4 +102,25 @@ export class MemoryHistoryService implements AssessmentHistoryService {
       },
     };
   }
+
+  async getOverview(namespace: HistoryNamespace) {
+    const records = [...(this.records.get(namespace)?.values() ?? [])];
+    return {
+      totalSessions: records.length,
+      likelyHumanSessions: records.filter(record => record.human.score >= 7.5 && record.human.confidence >= 0.5).length,
+      suspiciousSessions: records.filter(record => record.human.score < 4.5 && record.human.confidence >= 0.5).length,
+      anonymousSubjects: this.subjects.get(namespace)?.size ?? 0,
+      uncertainMatches: records.filter(record => (
+        "matchStatus" in record.identity && record.identity.matchStatus === "uncertain"
+      )).length,
+    };
+  }
+
+  async listSubjectSessions(namespace: HistoryNamespace, subjectId: string, limit: number): Promise<SessionSummary[]> {
+    return [...(this.records.get(namespace)?.values() ?? [])]
+      .filter(record => record.identity.subjectId === subjectId)
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt) || right.sessionId.localeCompare(left.sessionId))
+      .slice(0, limit)
+      .map(summary);
+  }
 }

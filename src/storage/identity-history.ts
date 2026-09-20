@@ -3,6 +3,7 @@ import { CloudflareSqlDatabase } from "./cloudflare-sql";
 import { applyStorageMigrations } from "./migrations";
 import { SqlAssessmentRepository } from "./sql-assessment-repository";
 import type { AssessmentRecord, SessionDetail, SessionSummary, SubjectProfile } from "./types";
+import type { DashboardOverview } from "../api/dashboard";
 
 export class IdentityHistory extends DurableObject<Cloudflare.Env> {
   private readonly repository: SqlAssessmentRepository;
@@ -33,5 +34,13 @@ export class IdentityHistory extends DurableObject<Cloudflare.Env> {
 
   getSubject(subjectId: string): SubjectProfile | null {
     return this.repository.getSubject(subjectId);
+  }
+
+  getOverview(): DashboardOverview {
+    return this.repository.getOverview();
+  }
+
+  listSubjectSessions(subjectId: string, limit: number): SessionSummary[] {
+    return this.repository.listSubjectSessions(subjectId, limit);
   }
 }

@@ -20,6 +20,7 @@ import type {
   SessionSummary,
   SubjectProfile,
 } from "./types";
+import type { DashboardOverview } from "../api/dashboard";
 
 interface SummaryRow {
   assessment_id: string;
@@ -50,6 +51,14 @@ interface SubjectRow {
   session_count: number;
   confidence: number;
   features_json: string;
+}
+
+interface OverviewRow {
+  total_sessions: number;
+  likely_human_sessions: number;
+  suspicious_sessions: number;
+  anonymous_subjects: number;
+  uncertain_matches: number;
 }
 
 type AvailableIdentityAssessment = Exclude<IdentityAssessment, { status: "unavailable" }>;
@@ -260,6 +269,42 @@ export class SqlAssessmentRepository implements AssessmentHistoryRepository {
       subjectId,
     )[0];
     return row ? mapSubject(row) : null;
+  }
+
+  getOverview(): DashboardOverview {
+    const row = this.database.query<OverviewRow>(
+      `SELECT
+         COUNT(*) AS total_sessions,
+         COALESCE(SUM(CASE WHEN human_score >= 7.5 AND human_confidence >= 0.5 THEN 1 ELSE 0 END), 0) AS likely_human_sessions,
+         COALESCE(SUM(CASE WHEN human_score < 4.5 AND human_confidence >= 0.5 THEN 1 ELSE 0 END), 0) AS suspicious_sessions,
+         (SELECT COUNT(*) FROM subjects) AS anonymous_subjects,
+         COALESCE(SUM(CASE WHEN identity_status = 'uncertain' THEN 1 ELSE 0 END), 0) AS uncertain_matches
+       FROM assessments`,
+    )[0];
+    if (!row) throw new Error("Overview query did not return a row.");
+    return {
+      totalSessions: row.total_sessions,
+      likelyHumanSessions: row.likely_human_sessions,
+      suspiciousSessions: row.suspicious_sessions,
+      anonymousSubjects: row.anonymous_subjects,
+      uncertainMatches: row.uncertain_matches,
+    };
+  }
+
+  listSubjectSessions(subjectId: string, limit: number): SessionSummary[] {
+    return this.database.query<SummaryRow>(
+      `SELECT s.session_id, s.created_at, s.source, s.simulation_profile,
+              a.assessment_id, a.human_score, a.human_confidence, a.flags_json,
+              a.identity_status, a.subject_id, a.continuity_confidence
+       FROM subject_sessions ss
+       JOIN sessions s ON s.session_id = ss.session_id
+       JOIN assessments a ON a.session_id = s.session_id
+       WHERE ss.subject_id = ?
+       ORDER BY s.created_at DESC, s.session_id DESC
+       LIMIT ?`,
+      subjectId,
+      limit,
+    ).map(mapSummary);
   }
 
   private listSubjects(): SubjectProfile[] {

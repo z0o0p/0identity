@@ -13,6 +13,7 @@
   },
   "include": [
     "web",
+    "src/browser",
     "src/shared"
   ]
 }

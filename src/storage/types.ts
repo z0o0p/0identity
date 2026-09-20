@@ -3,6 +3,7 @@ import type { IdentityFeatureVector, IdentityNetworkContext } from "../identity/
 import type { HumanLikelihoodAssessment } from "../shared/domain";
 import type { SimulationProfile } from "../simulator/profiles";
 import type { NormalizedSignals } from "../signals/normalize";
+import type { DashboardOverview } from "../api/dashboard";
 
 export const HISTORY_SOURCES = ["live", "simulation"] as const;
 
@@ -45,6 +46,8 @@ export interface AssessmentHistoryRepository {
   listSessions(limit: number): SessionSummary[];
   getSession(sessionId: string): SessionDetail | null;
   getSubject(subjectId: string): SubjectProfile | null;
+  getOverview(): DashboardOverview;
+  listSubjectSessions(subjectId: string, limit: number): SessionSummary[];
 }
 
 export interface AssessmentHistoryService {
@@ -55,6 +58,8 @@ export interface AssessmentHistoryService {
   ): Promise<AssessmentRecord>;
   listSessions(namespace: HistoryNamespace, limit: number): Promise<SessionSummary[]>;
   getSession(namespace: HistoryNamespace, sessionId: string): Promise<SessionDetail | null>;
+  getOverview(namespace: HistoryNamespace): Promise<DashboardOverview>;
+  listSubjectSessions(namespace: HistoryNamespace, subjectId: string, limit: number): Promise<SessionSummary[]>;
 }
 
 export interface SubjectProfile {

@@ -150,6 +150,14 @@ describe("SQLite assessment repository", () => {
     expect(returning.identity).toMatchObject({ matchStatus: "matched", subjectId: "0id_1" });
     expect(history.getSubject("0id_1")).toMatchObject({ sessionCount: 2 });
     expect(history.getSubject("0id_unused")).toBeNull();
+    expect(history.getOverview()).toEqual({
+      totalSessions: 2,
+      likelyHumanSessions: 2,
+      suspiciousSessions: 0,
+      anonymousSubjects: 1,
+      uncertainMatches: 0,
+    });
+    expect(history.listSubjectSessions("0id_1", 10)).toHaveLength(2);
   });
 
   it("does not link or update a subject when a changed device is uncertain", () => {
@@ -177,5 +185,7 @@ describe("SQLite assessment repository", () => {
     expect(history.getSubject("0id_1")).toEqual(original);
     expect(history.getSubject("0id_unused")).toBeNull();
     expect(database.query("SELECT * FROM subject_sessions")).toHaveLength(1);
+    expect(history.getOverview()).toMatchObject({ totalSessions: 2, anonymousSubjects: 1, uncertainMatches: 1 });
+    expect(history.listSubjectSessions("0id_1", 10)).toHaveLength(1);
   });
 });

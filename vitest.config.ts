@@ -7,5 +7,5 @@ export default defineConfig({
       "cloudflare:workers": fileURLToPath(new URL("./tests/helpers/cloudflare-workers.ts", import.meta.url)),
     },
   },
-  test: { include: ["tests/**/*.test.ts"], environment: "node" },
+  test: { include: ["tests/**/*.test.ts", "web/**/*.test.ts"], environment: "node" },
 });

@@ -29,4 +29,12 @@ export class DurableHistoryService implements AssessmentHistoryService {
   async getSession(namespace: HistoryNamespace, sessionId: string): Promise<SessionDetail | null> {
     return this.env.IDENTITY_HISTORY.getByName(namespace).getSession(sessionId);
   }
+
+  async getOverview(namespace: HistoryNamespace) {
+    return this.env.IDENTITY_HISTORY.getByName(namespace).getOverview();
+  }
+
+  async listSubjectSessions(namespace: HistoryNamespace, subjectId: string, limit: number) {
+    return this.env.IDENTITY_HISTORY.getByName(namespace).listSubjectSessions(subjectId, limit);
+  }
 }
