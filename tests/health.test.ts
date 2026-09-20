@@ -24,7 +24,7 @@ describe("health API", () => {
     expect(await response.json()).toMatchObject({ error: { code: "method_not_allowed" } });
   });
 
-  it.each(["/api", "/api/v1/unknown", "/api/v1/health/", "/api/v1/assess"])("returns JSON 404 for %s", async path => {
+  it.each(["/api", "/api/v1/unknown", "/api/v1/health/"])("returns JSON 404 for %s", async path => {
     const response = await worker.fetch(new Request(`http://localhost${path}`));
     expect(response.status).toBe(404);
     expect(await response.json()).toMatchObject({ error: { code: "not_found" } });

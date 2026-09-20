@@ -5,7 +5,8 @@
       "ES2022"
     ],
     "types": [
-      "node"
+      "node",
+      "./worker-configuration.d.ts"
     ]
   },
   "include": [

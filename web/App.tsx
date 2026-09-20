@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { isHealthResponse } from "../src/shared/health";
+import { Simulator } from "./components/Simulator";
 
 type Connection = "checking" | "connected" | "unavailable";
 
@@ -49,10 +50,13 @@ export function App() {
       <header className="topbar">
         <a className="wordmark" href="/" aria-label="0identity home"><span className="wordmark-symbol">0</span><span className="wordmark-name">identity</span></a>
       </header>
-      <section className="intro" aria-labelledby="title">
-        <h1 id="title" className="editorial">Are you human?</h1>
-        <p className="lede">0identity helps developers assess whether an interaction appears human and whether an anonymous subject may be continuing across sessions.</p>
-      </section>
+      <div className="page-content">
+        <section className="intro" aria-labelledby="title">
+          <h1 id="title" className="editorial">Are you human?</h1>
+          <p className="lede">0identity helps developers assess whether an interaction appears human and, independently, whether an anonymous subject may be continuing across sessions.</p>
+        </section>
+        <Simulator />
+      </div>
       <footer className="connection" aria-label="Application status and copyright">
         <div className="connection-footer">
           <p>© {year} Taqmeel Zubeir</p>
