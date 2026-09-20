@@ -1,0 +1,167 @@
+:root {
+  --color-accent: #6fd1d7;
+  --color-background-dark: #07151d;
+  --color-background-light: #f5fafa;
+  --color-primary: #093c5d;
+  --color-secondary: #3b7597;
+  --color-signal: #5df8d8;
+  --color-ternary: #8a9ba3;
+  --color-text-dark: #102129;
+  --font-content: "Saira", ui-sans-serif, system-ui, sans-serif;
+  --font-header: "Aleo", Georgia, "Times New Roman", serif;
+  --font-wordmark: "Share Tech", ui-sans-serif, system-ui, sans-serif;
+  --space-gutter: clamp(24px, 5vw, 72px);
+  --text-body: 1rem;
+  --text-brand: 1.875rem;
+  --text-display: clamp(2.625rem, 7vw, 4.75rem);
+  --text-small: 0.75rem;
+  --weight-regular: 400;
+  --weight-semibold: 600;
+  background: var(--color-background-light);
+  color: var(--color-text-dark);
+  font-family: var(--font-content);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  line-height: 1.6;
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+h1 {
+  color: var(--color-primary);
+  font-size: var(--text-display);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+  margin: 0 0 16px;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+.connection {
+  align-items: center;
+  background: var(--color-ternary);
+  color: var(--color-text-dark);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--text-small);
+  gap: 4px 16px;
+  justify-content: space-between;
+  line-height: 1.4;
+  padding: 6px var(--space-gutter);
+}
+
+.connection p {
+  margin: 0;
+}
+
+.connection-status {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.connection-status button {
+  background: transparent;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  display: grid;
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  width: 28px;
+}
+
+.connection-status button svg {
+  height: 14px;
+  width: 14px;
+}
+
+.connection-status button:disabled {
+  color: var(--color-text-dark);
+  cursor: wait;
+}
+
+.connection-status button:focus-visible {
+  outline-offset: 3px;
+  outline: 3px solid var(--color-background-dark);
+}
+
+.connection-status button:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: var(--color-background-light);
+}
+
+.editorial {
+  font-family: var(--font-header);
+}
+
+.intro {
+  flex: 1;
+  max-width: none;
+  padding: clamp(50px, 8vw, 90px) var(--space-gutter);
+  width: 75%;
+}
+
+.lede {
+  color: var(--color-secondary);
+  line-height: 1.65;
+  margin: 0;
+  max-width: 580px;
+}
+
+.topbar {
+  align-items: center;
+  background: var(--color-primary);
+  color: var(--color-background-light);
+  display: flex;
+  min-height: 60px;
+  padding: 12px var(--space-gutter);
+}
+
+.wordmark {
+  color: inherit;
+  font-family: var(--font-wordmark);
+  font-size: var(--text-brand);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.wordmark-symbol {
+  color: var(--color-signal);
+}
+
+.wordmark:focus-visible {
+  outline-offset: 3px;
+  outline: 3px solid var(--color-accent);
+}
+
+@media (max-width: 640px) {
+  .intro {
+    width: 100%;
+  }
+}
