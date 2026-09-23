@@ -216,7 +216,7 @@ export class SqlAssessmentRepository implements AssessmentHistoryRepository {
     });
   }
 
-  listSessions(limit: number): SessionSummary[] {
+  listSessions(limit: number, offset = 0): SessionSummary[] {
     return this.database.query<SummaryRow>(
       `SELECT s.session_id, s.created_at, s.source, s.simulation_profile,
               a.assessment_id, a.human_score, a.human_confidence, a.flags_json,
@@ -224,8 +224,9 @@ export class SqlAssessmentRepository implements AssessmentHistoryRepository {
        FROM sessions s
        JOIN assessments a ON a.session_id = s.session_id
        ORDER BY s.created_at DESC, s.session_id DESC
-       LIMIT ?`,
+       LIMIT ? OFFSET ?`,
       limit,
+      offset,
     ).map(mapSummary);
   }
 

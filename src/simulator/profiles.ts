@@ -21,37 +21,37 @@ export interface SimulationProfileDetails {
 
 export const SIMULATION_PROFILE_DETAILS: Record<SimulationProfile, SimulationProfileDetails> = {
   "normal-human": {
-    label: "Normal human",
+    label: "Human visitor",
     description: "Varied pointer, scroll, keyboard-timing, and session activity.",
     seed: 10_031,
   },
   "regular-scripted-bot": {
-    label: "Regular scripted bot",
+    label: "Automated script",
     description: "Repeated timing and movement patterns with a coherent browser environment.",
     seed: 20_033,
   },
   "headless-automation": {
-    label: "Headless automation",
+    label: "Headless browser",
     description: "Regular behavior plus contradictory automation and rendering signals.",
     seed: 30_041,
   },
   "returning-human-same-device": {
-    label: "Returning human · same device",
+    label: "Returning visitor, same device",
     description: "Human-like behavior from the normal-human device and network context.",
     seed: 10_037,
   },
   "returning-human-new-network": {
-    label: "Returning human · new network",
+    label: "Returning visitor, new network",
     description: "Similar behavior and device evidence observed from a changed coarse network.",
     seed: 10_039,
   },
   "possible-returning-human-new-device": {
-    label: "Possible return · new device",
+    label: "Possible returning visitor, new device",
     description: "Similar behavior with substantially changed device evidence; expected to remain uncertain.",
     seed: 10_043,
   },
   "low-information-session": {
-    label: "Low-information session",
+    label: "Limited session data",
     description: "A short observation with too little behavior for a confident result.",
     seed: 40_009,
   },

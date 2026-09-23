@@ -1,0 +1,76 @@
+.simulator-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 22%, transparent);
+  margin-bottom: 20px;
+}
+
+.simulator-summary>section {
+  padding: 16px 22px;
+  border-right: 1px solid color-mix(in srgb, var(--color-secondary) 22%, transparent);
+}
+
+.simulator-summary>section:last-child {
+  border: 0;
+}
+
+.simulator-summary h2 {
+  font-family: var(--font-subheader);
+  font-size: 0.875rem;
+  font-weight: 400;
+  margin: 0 0 8px;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  text-decoration-color: var(--color-accent);
+  text-decoration-line: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+.simulator-summary p {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-secondary);
+  margin: 0;
+}
+
+@media (max-width: 1000px) {
+  .simulator-summary>section {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .simulator-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .simulator-summary>section {
+    padding: 14px 18px;
+    border-right: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-secondary) 22%, transparent);
+  }
+}
+
+@media (max-width: 1000px) {
+  .simulator-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.simulator-page {}
+
+.page-intro {
+  margin: 8px 0 32px;
+}
+
+.page-intro h1 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  margin-bottom: 12px;
+}
+
+.page-intro p {
+  color: var(--color-secondary);
+  font-size: 1rem;
+  margin-bottom: 0;
+}

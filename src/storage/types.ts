@@ -43,7 +43,7 @@ export interface SessionDetail extends SessionSummary {
 
 export interface AssessmentHistoryRepository {
   assessAndSave(record: AssessmentRecord, proposedSubjectId: string): AssessmentRecord;
-  listSessions(limit: number): SessionSummary[];
+  listSessions(limit: number, offset?: number): SessionSummary[];
   getSession(sessionId: string): SessionDetail | null;
   getSubject(subjectId: string): SubjectProfile | null;
   getOverview(): DashboardOverview;
@@ -56,7 +56,7 @@ export interface AssessmentHistoryService {
     record: AssessmentRecord,
     proposedSubjectId: string,
   ): Promise<AssessmentRecord>;
-  listSessions(namespace: HistoryNamespace, limit: number): Promise<SessionSummary[]>;
+  listSessions(namespace: HistoryNamespace, limit: number, offset?: number): Promise<SessionSummary[]>;
   getSession(namespace: HistoryNamespace, sessionId: string): Promise<SessionDetail | null>;
   getSubject(namespace: HistoryNamespace, subjectId: string): Promise<SubjectProfile | null>;
   getOverview(namespace: HistoryNamespace): Promise<DashboardOverview>;

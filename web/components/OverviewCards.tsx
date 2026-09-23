@@ -1,29 +1,53 @@
+import styles from "./OverviewCards.module.css";
 import type { DashboardOverview } from "../../src/api/dashboard";
 
 interface OverviewCardsProps {
   overview: DashboardOverview;
 }
 
-const METRICS: Array<{
-  key: keyof DashboardOverview;
+const METRIC_GROUPS: Array<{
   label: string;
   description: string;
+  values: Array<{ key: keyof DashboardOverview; label: string }>;
 }> = [
-  { key: "totalSessions", label: "Sessions", description: "All persisted sessions in this data source." },
-  { key: "likelyHumanSessions", label: "Likely human", description: "Score at least 7.5 with confidence at least 50%." },
-  { key: "suspiciousSessions", label: "Suspicious", description: "Score below 4.5 with confidence at least 50%." },
-  { key: "anonymousSubjects", label: "Subjects", description: "Anonymous subject profiles; not verified identities." },
-  { key: "uncertainMatches", label: "Uncertain", description: "Sessions intentionally left without a subject link." },
-];
+    {
+      label: "Sessions and profiles",
+      description: "All persisted sessions and anonymous subject profiles in this data source.",
+      values: [
+        { key: "totalSessions", label: "Sessions" },
+        { key: "anonymousSubjects", label: "Profiles" },
+      ],
+    },
+    {
+      label: "Assessment outcomes",
+      description: "Human-likelihood and continuity outcomes across this data source.",
+      values: [
+        { key: "likelyHumanSessions", label: "Likely human" },
+        { key: "suspiciousSessions", label: "Automation indicators" },
+        { key: "uncertainMatches", label: "Uncertain continuity" },
+      ],
+    },
+  ];
 
 export function OverviewCards({ overview }: OverviewCardsProps) {
   return (
-    <div className="overview-grid" aria-label="Dashboard overview">
-      {METRICS.map(metric => (
-        <article className="metric-card" key={metric.key} title={metric.description}>
-          <strong>{overview[metric.key]}</strong>
-          <span>{metric.label}</span>
-          <small>{metric.description}</small>
+    <div className={styles["overview-grid"]} aria-label="Dashboard overview">
+      {METRIC_GROUPS.map((group) => (
+        <article
+          className={styles["metric-card"]}
+          data-metric
+          key={group.label}
+          title={group.description}
+        >
+          <h2>{group.label}</h2>
+          <dl>
+            {group.values.map((metric) => (
+              <div key={metric.key}>
+                <dt>{metric.label}</dt>
+                <dd>{overview[metric.key]}</dd>
+              </div>
+            ))}
+          </dl>
         </article>
       ))}
     </div>

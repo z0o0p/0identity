@@ -81,10 +81,10 @@ export class MemoryHistoryService implements AssessmentHistoryService {
     return structuredClone(stored);
   }
 
-  async listSessions(namespace: HistoryNamespace, limit: number): Promise<SessionSummary[]> {
+  async listSessions(namespace: HistoryNamespace, limit: number, offset = 0): Promise<SessionSummary[]> {
     return [...(this.records.get(namespace)?.values() ?? [])]
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt) || right.sessionId.localeCompare(left.sessionId))
-      .slice(0, limit)
+      .slice(offset, offset + limit)
       .map(summary);
   }
 

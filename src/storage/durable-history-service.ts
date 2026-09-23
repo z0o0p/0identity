@@ -22,8 +22,8 @@ export class DurableHistoryService implements AssessmentHistoryService {
     return this.env.IDENTITY_HISTORY.getByName(namespace).assessAndSave(record, proposedSubjectId);
   }
 
-  async listSessions(namespace: HistoryNamespace, limit: number): Promise<SessionSummary[]> {
-    return this.env.IDENTITY_HISTORY.getByName(namespace).listSessions(limit);
+  async listSessions(namespace: HistoryNamespace, limit: number, offset = 0): Promise<SessionSummary[]> {
+    return this.env.IDENTITY_HISTORY.getByName(namespace).listSessions(limit, offset);
   }
 
   async getSession(namespace: HistoryNamespace, sessionId: string): Promise<SessionDetail | null> {

@@ -1,15 +1,64 @@
-import { useEffect, useState } from "react";
+import styles from "./App.module.css";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { isHealthResponse } from "../src/shared/health";
-import { Simulator } from "./components/Simulator";
 import { Dashboard } from "./components/Dashboard";
+import { Home } from "./pages/Home";
+import { Simulator } from "./pages/Simulator";
+import { Faqs } from "./pages/Faqs";
+import { pageFromHash } from "./lib/navigation";
+import {
+  useInteractiveMotion,
+  usePageMotion,
+} from "./hooks/motion";
 
 type Connection = "checking" | "connected" | "unavailable";
 
+function PageContent({
+  children,
+  page,
+}: {
+  children: ReactNode;
+  page: string;
+}) {
+  const root = useRef<HTMLDivElement>(null);
+  usePageMotion(root);
+  return (
+    <div
+      ref={root}
+      className={[
+        styles["page-content"],
+        page === "home" ? styles["page-home"] : "",
+      ].join(" ")}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function App() {
+  const root = useRef<HTMLDivElement>(null);
+  const main = useRef<HTMLElement>(null);
+  const [page, setPage] = useState(() => pageFromHash(window.location.hash));
+  const [menuOpen, setMenuOpen] = useState(false);
   const [connection, setConnection] = useState<Connection>("checking");
-  const [attempt, setAttempt] = useState(0);
   const [dashboardVersion, setDashboardVersion] = useState(0);
   const year = new Date().getFullYear();
+  useInteractiveMotion(root);
+
+  useEffect(() => {
+    const navigate = () => {
+      setPage(pageFromHash(window.location.hash));
+      setMenuOpen(false);
+      window.scrollTo({ top: 0, behavior: "instant" });
+      main.current?.focus({ preventScroll: true });
+    };
+    window.addEventListener("hashchange", navigate);
+    return () => window.removeEventListener("hashchange", navigate);
+  }, []);
+
+  useEffect(() => {
+    document.title = "0identity";
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -24,7 +73,8 @@ export function App() {
           cache: "no-store",
         });
         const body: unknown = await response.json();
-        if (!response.ok || !isHealthResponse(body)) throw new Error("Invalid health response.");
+        if (!response.ok || !isHealthResponse(body))
+          throw new Error("Invalid health response.");
         if (active) setConnection("connected");
       } catch {
         if (active) setConnection("unavailable");
@@ -39,7 +89,7 @@ export function App() {
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [attempt]);
+  }, []);
 
   const status = {
     checking: "Checking connection…",
@@ -48,38 +98,111 @@ export function App() {
   }[connection];
 
   return (
-    <main>
-      <header className="topbar">
-        <a className="wordmark" href="/" aria-label="0identity home"><span className="wordmark-symbol">0</span><span className="wordmark-name">identity</span></a>
-      </header>
-      <div className="page-content">
-        <section className="intro" aria-labelledby="title">
-          <h1 id="title" className="editorial">Are you human?</h1>
-          <p className="lede">0identity helps developers assess whether an interaction appears human and, independently, whether an anonymous subject may be continuing across sessions.</p>
-        </section>
-        <Simulator onAssessmentComplete={() => setDashboardVersion(value => value + 1)} />
-        <Dashboard refreshKey={dashboardVersion} />
+    <div className={styles["application"]} ref={root}>
+      <a
+        className={styles["skip-link"]}
+        href="#main-content"
+        onClick={(event) => {
+          event.preventDefault();
+          main.current?.focus();
+        }}
+      >
+        Skip to content
+      </a>
+      <div className={styles["viewport"]}>
+        <header className={styles["topbar"]}>
+          <a className={styles["wordmark"]} href="#/" aria-label="0identity home">
+            <span className={styles["wordmark-symbol"]}>0</span>
+            <span className={styles["wordmark-name"]}>identity</span>
+          </a>
+          <button
+            className={styles["menu-toggle"]}
+            type="button"
+            aria-expanded={menuOpen}
+            aria-controls="primary-navigation"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {menuOpen ? "×" : "☰"}
+          </button>
+          <nav
+            id="primary-navigation"
+            className={[
+              styles["primary-navigation"],
+              menuOpen ? styles["menu-open"] : "",
+            ].join(" ")}
+            aria-label="Primary navigation"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                setMenuOpen(false);
+                root.current
+                  ?.querySelector<HTMLButtonElement>(`.${styles["menu-toggle"]}`)
+                  ?.focus();
+              }
+            }}
+          >
+            {(["home", "simulator", "faqs"] as const).map((item) => (
+              <a
+                key={item}
+                href={item === "home" ? "#/" : `#/${item}`}
+                aria-current={page === item ? "page" : undefined}
+                onClick={() => setMenuOpen(false)}
+              >
+                {item.toUpperCase()}
+                <span aria-hidden="true" />
+              </a>
+            ))}
+            <a
+              className={styles["mobile-dashboard"]}
+              href="#/dashboard"
+              aria-current={page === "dashboard" ? "page" : undefined}
+              onClick={() => setMenuOpen(false)}
+            >
+              DASHBOARD
+            </a>
+          </nav>
+          <a
+            className={styles["nav-dashboard"]}
+            data-motion-interactive
+            href="#/dashboard"
+            aria-current={page === "dashboard" ? "page" : undefined}
+            onClick={() => setMenuOpen(false)}
+          >
+            DASHBOARD
+          </a>
+        </header>
+        <main id="main-content" ref={main} tabIndex={-1}>
+          <PageContent key={page} page={page}>
+            {page === "home" && <Home />}
+            {page === "simulator" && (
+              <Simulator
+                onAssessmentComplete={() =>
+                  setDashboardVersion((value) => value + 1)
+                }
+              />
+            )}
+            {page === "faqs" && <Faqs />}
+            {page === "dashboard" && (
+              <Dashboard refreshKey={dashboardVersion} />
+            )}
+          </PageContent>
+        </main>
       </div>
-      <footer className="connection" aria-label="Application status and copyright">
-        <div className="connection-footer">
+      <footer
+        className={styles["connection"]}
+        aria-label="Application status and copyright"
+      >
+        <div className={styles["connection-footer"]}>
           <p>© {year} Taqmeel Zubeir</p>
         </div>
-        <div className="connection-status">
-          <p className={`status ${connection}`} role="status">{status}</p>
-          <button
-            type="button"
-            disabled={connection === "checking"}
-            onClick={() => setAttempt(value => value + 1)}
-            aria-label="Check Worker connection"
-            title="Check Worker connection"
+        <div className={styles["connection-status"]}>
+          <span
+            role="status"
+            className={[styles.status, styles[connection]].join(" ")}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4" />
-              <path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4" />
-            </svg>
-          </button>
+            {status}
+          </span>
         </div>
       </footer>
-    </main>
+    </div>
   );
 }

@@ -1,0 +1,296 @@
+.signal-illustration {
+  width: 80%;
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 22%, transparent);
+  background: var(--color-light);
+  padding: 28px 38px;
+  font-size: 0.875rem;
+  border-radius: 6px;
+}
+
+.signal-canvas {
+  position: relative;
+  height: clamp(220px, 26svh, 280px);
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1fr;
+  align-items: center;
+  gap: 30px;
+}
+
+.signal-wires {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  color: var(--color-ternary);
+}
+
+.flow-packet {
+  opacity: 0;
+}
+
+.signal-inputs,
+.signal-center,
+.signal-outputs {
+  position: relative;
+}
+
+.signal-inputs {
+  display: grid;
+  gap: 28px;
+}
+
+.signal-input {
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 22%, transparent);
+  background: var(--color-light);
+  padding: 15px 17px;
+  color: var(--color-primary);
+  border-radius: 4px;
+}
+
+.signal-center {
+  display: grid;
+  place-items: center;
+  height: 200px;
+}
+
+.signal-core {
+  position: relative;
+  width: 65.82px;
+  height: 76px;
+}
+
+.signal-outputs {
+  display: grid;
+  gap: 18px;
+}
+
+.signal-output {
+  padding: 14px 18px;
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 22%, transparent);
+  border-radius: 4px;
+  background: var(--color-light);
+}
+
+.signal-output strong {
+  display: block;
+  font-weight: 400;
+  color: var(--color-primary);
+}
+
+.signal-output small {
+  color: var(--color-secondary);
+}
+
+.signal-mini-bars {
+  display: flex;
+  gap: 4px;
+  align-items: end;
+  height: 26px;
+  margin-top: 9px;
+}
+
+.signal-mini-bars i {
+  flex: 1;
+  background: var(--color-ternary);
+}
+
+.continuity-nodes {
+  display: flex;
+  align-items: center;
+  height: auto;
+  justify-content: space-between;
+  margin-top: 9px;
+}
+
+.continuity-nodes i {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--color-secondary);
+  border-radius: 50%;
+}
+
+.continuity-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.continuity-state span {
+  background: none;
+  width: auto;
+  height: auto;
+}
+
+.continuity-node {
+  display: block;
+}
+
+@media (max-width: 1000px) {
+  .signal-canvas {
+    gap: 18px;
+    grid-template-columns: 1fr 0.95fr 1fr;
+  }
+
+  .signal-illustration {
+    padding: 24px;
+  }
+
+  .signal-input {
+    padding: 13px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .signal-canvas {
+    height: auto;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .signal-wires {
+    display: none;
+  }
+
+  .signal-inputs {
+    grid-column: 1;
+    grid-row: 1;
+    gap: 12px;
+  }
+
+  .signal-center {
+    grid-column: 2;
+    grid-row: 1;
+    height: 200px;
+  }
+
+  .signal-outputs {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .signal-output {
+    padding: 12px;
+  }
+}
+
+.signal-canvas {
+  grid-template-columns: 1fr 1fr 1.2fr;
+  min-height: 240px;
+}
+
+.signal-output small {
+  display: block;
+}
+
+@media (max-width: 1000px) {
+  .signal-canvas {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .signal-outputs {
+    grid-template-columns: 1fr;
+  }
+
+  .signal-illustration {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 420px) {
+  .signal-canvas {
+    grid-template-columns: 1fr;
+  }
+
+  .signal-center,
+  .signal-inputs,
+  .signal-outputs {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .signal-center {
+    height: 160px;
+  }
+}
+
+@media (max-width: 420px) {
+  .signal-illustration {
+    padding: 16px;
+  }
+
+  .signal-input {
+    padding: 12px 8px;
+  }
+
+  .signal-core {
+    width: 65.82px;
+    height: 76px;
+  }
+
+  .signal-center {
+    height: 170px;
+  }
+}
+
+.flow-in {}
+
+.flow-out {}
+
+.signal-path {}
+
+.continuity-output {}
+
+.signal-input,
+.signal-output strong {
+  font-family: var(--font-subheader);
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: 0.875rem;
+}
+
+.signal-output small,
+.continuity-state span {
+  font-size: 0.8125rem;
+}
+
+.continuity-node.continuity-selected {
+  background: var(--color-ternary);
+  border-color: var(--color-ternary);
+  box-shadow: 0 0 12px var(--color-ternary);
+}
+
+@media (max-width: 1000px) {
+  .signal-illustration {
+    width: 100%;
+  }
+
+  .signal-canvas {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: stretch;
+  }
+
+  .signal-inputs,
+  .signal-center,
+  .signal-outputs {
+    display: none;
+  }
+
+  .signal-outputs {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .signal-output {
+    min-width: 0;
+    padding: 14px 16px;
+  }
+
+  .signal-mini-bars {
+    width: 100%;
+  }
+}

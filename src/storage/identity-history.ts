@@ -24,8 +24,8 @@ export class IdentityHistory extends DurableObject<Cloudflare.Env> {
     return this.repository.assessAndSave(record, proposedSubjectId);
   }
 
-  listSessions(limit: number): SessionSummary[] {
-    return this.repository.listSessions(limit);
+  listSessions(limit: number, offset = 0): SessionSummary[] {
+    return this.repository.listSessions(limit, offset);
   }
 
   getSession(sessionId: string): SessionDetail | null {

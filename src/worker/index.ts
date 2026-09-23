@@ -76,24 +76,39 @@ function requestNetworkContext(request: Request): IdentityNetworkContext | undef
   };
 }
 
-function parseHistoryQuery(url: URL): { source: HistorySource; limit: number } {
+function parseHistoryQuery(url: URL): { source: HistorySource; limit: number; offset: number } {
   for (const key of url.searchParams.keys()) {
-    if (key !== "source" && key !== "limit") {
+    if (key !== "source" && key !== "limit" && key !== "offset") {
       throw new ApiRequestError(400, "invalid_query", "History query parameters are invalid.");
     }
   }
 
-  if (url.searchParams.getAll("source").length > 1 || url.searchParams.getAll("limit").length > 1) {
+  if (
+    url.searchParams.getAll("source").length > 1 ||
+    url.searchParams.getAll("limit").length > 1 ||
+    url.searchParams.getAll("offset").length > 1
+  ) {
     throw new ApiRequestError(400, "invalid_query", "History query parameters must not be repeated.");
   }
 
   const sourceResult = historySourceSchema.safeParse(url.searchParams.get("source") ?? "simulation");
   const limitText = url.searchParams.get("limit") ?? "12";
+  const offsetText = url.searchParams.get("offset") ?? "0";
   const limit = Number(limitText);
-  if (!sourceResult.success || !/^\d+$/.test(limitText) || !Number.isInteger(limit) || limit < 1 || limit > 50) {
+  const offset = Number(offsetText);
+  if (
+    !sourceResult.success ||
+    !/^\d+$/.test(limitText) ||
+    !/^\d+$/.test(offsetText) ||
+    !Number.isInteger(limit) ||
+    !Number.isInteger(offset) ||
+    limit < 1 ||
+    limit > 50 ||
+    offset > 10_000
+  ) {
     throw new ApiRequestError(400, "invalid_query", "History source or limit is invalid.");
   }
-  return { source: sourceResult.data, limit };
+  return { source: sourceResult.data, limit, offset };
 }
 
 function parseOverviewQuery(url: URL): HistorySource {
@@ -192,9 +207,9 @@ export function createWorker(dependencies: WorkerDependencies = {}) {
           if (request.method !== "GET") {
             return errorResponse(405, "method_not_allowed", "Use GET.", requestId, { Allow: "GET" });
           }
-          const { source, limit } = parseHistoryQuery(url);
+          const { source, limit, offset } = parseHistoryQuery(url);
           const history = historyService(env, dependencies);
-          const sessions = await withHistory(() => history.listSessions(HISTORY_NAMESPACE[source], limit));
+          const sessions = await withHistory(() => history.listSessions(HISTORY_NAMESPACE[source], limit, offset));
           return Response.json({ sessions }, { headers: { ...JSON_HEADERS, "X-Request-Id": requestId } });
         }
 

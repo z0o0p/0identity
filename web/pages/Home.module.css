@@ -1,0 +1,39 @@
+.home-stage {
+  width: 100%;
+  max-width: 1120px;
+  margin: auto;
+  padding: 8px 0 12px;
+}
+
+.hero-title {
+  font-family: var(--font-header);
+  font-weight: 400;
+  font-size: clamp(2rem, 7vw, 6.5rem);
+  letter-spacing: -0.065em;
+  line-height: 0.98;
+  width: fit-content;
+  margin: 0 auto 30px;
+  padding-right: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.hero-title span {
+  display: inline;
+  margin-left: 0;
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+@media (max-width: 1000px) {
+  .hero-title {
+    padding-right: 0;
+  }
+}
+
+.hero-description {
+  width: 90%;
+  margin: -10px auto 32px;
+  color: var(--color-secondary);
+  text-align: center;
+}

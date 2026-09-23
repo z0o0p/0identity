@@ -28,8 +28,12 @@ export async function getDashboardOverview(source: HistorySource, signal: AbortS
 export async function getDashboardSessions(
   source: HistorySource,
   signal: AbortSignal,
+  offset = 0,
 ): Promise<SessionListResponse["sessions"]> {
-  const response = await fetch(`/api/v1/sessions?source=${source}&limit=50`, { cache: "no-store", signal });
+  const response = await fetch(
+    `/api/v1/sessions?source=${source}&limit=15&offset=${offset}`,
+    { cache: "no-store", signal },
+  );
   return sessionListResponseSchema.parse(await responseBody(response)).sessions;
 }
 
