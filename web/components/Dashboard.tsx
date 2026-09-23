@@ -260,7 +260,7 @@ export function Dashboard({ refreshKey }: DashboardProps) {
                 ))}
               </select>
             </label>
-            <div ref={panelsMotion} aria-busy={detailStatus === "loading"}>
+            <div className={styles["session-content"]} ref={panelsMotion} aria-busy={detailStatus === "loading"}>
               {detailStatus === "loading" ? (
                 <p className={styles["dashboard-message"]} role="status">Loading session evidence…</p>
               ) : detailStatus === "error" ? (

@@ -143,6 +143,7 @@
   align-items: center;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
   min-height: 20px;
 }
@@ -166,13 +167,12 @@
   color: var(--color-light);
   content: attr(data-tooltip);
   font-size: 0.8125rem;
-  left: 50%;
+  right: 0;
   line-height: 1.4;
   opacity: 0;
   padding: 8px 10px;
   pointer-events: none;
   position: absolute;
-  transform: translateX(-50%);
   visibility: hidden;
   white-space: normal;
   width: max-content;
@@ -303,14 +303,18 @@
 }
 
 .session-picker {
-  display: grid;
-  gap: 8px;
+  min-height: var(--investigation-header-height);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid rgb(59 117 151 / 18%);
+  padding: 16px 20px;
   color: var(--color-secondary);
   max-width: 100%;
 }
 
 .session-picker select {
-  width: 100%;
+  flex: 1;
   min-width: 0;
 }
 
@@ -330,6 +334,7 @@
 }
 
 .investigation-layout {
+  --investigation-header-height: 73px;
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 20px;
@@ -340,7 +345,10 @@
   background: var(--color-light);
   border: 1px solid rgb(59 117 151 / 24%);
   min-width: 0;
-  padding: 20px;
+}
+
+.session-content {
+  padding: 0 20px 20px;
 }
 
 .session-table td code {

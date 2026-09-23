@@ -29,7 +29,8 @@
 }
 
 .investigation-heading {
-  align-items: flex-start;
+  align-items: center;
+  min-height: var(--investigation-header-height, 73px);
   border-bottom: 1px solid rgb(59 117 151 / 18%);
 }
 
