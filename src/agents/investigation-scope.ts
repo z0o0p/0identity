@@ -9,7 +9,7 @@ export const MAX_INVESTIGATION_QUESTION_CHARS = 1_200;
 export interface InvestigationScope {
   source: HistorySource;
   namespace: HistoryNamespace;
-  sessionId: string;
+  sessionId: string | null;
 }
 
 const investigationAgentNameSchema = z.string().max(96).transform((name, context): InvestigationScope => {
@@ -19,7 +19,8 @@ const investigationAgentNameSchema = z.string().max(96).transform((name, context
     return z.NEVER;
   }
   const source = historySourceSchema.safeParse(name.slice(0, separator));
-  const sessionId = sessionIdentifierSchema.safeParse(name.slice(separator + AGENT_NAME_SEPARATOR.length));
+  const target = name.slice(separator + AGENT_NAME_SEPARATOR.length);
+  const sessionId = sessionIdentifierSchema.nullable().safeParse(target === "dashboard" ? null : target);
   if (!source.success || !sessionId.success) {
     context.addIssue({ code: "custom", message: "Investigation Agent scope is invalid." });
     return z.NEVER;
@@ -31,8 +32,8 @@ const investigationAgentNameSchema = z.string().max(96).transform((name, context
   };
 });
 
-export function investigationAgentName(source: HistorySource, sessionId: string): string {
-  return `${source}${AGENT_NAME_SEPARATOR}${sessionIdentifierSchema.parse(sessionId)}`;
+export function investigationAgentName(source: HistorySource, sessionId?: string): string {
+  return `${source}${AGENT_NAME_SEPARATOR}${sessionId === undefined ? "dashboard" : sessionIdentifierSchema.parse(sessionId)}`;
 }
 
 export function parseInvestigationAgentName(name: string): InvestigationScope | null {

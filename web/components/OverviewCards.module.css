@@ -44,7 +44,7 @@
 
 .metric-card dd {
   color: var(--color-ternary);
-  font-size: clamp(2rem, 3vw, 2.75rem);
+  font-size: clamp(1.7rem, 2.55vw, 2.3375rem);
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
@@ -84,7 +84,7 @@
   }
 
   .metric-card dd {
-    font-size: clamp(1.4rem, 6vw, 1.7rem);
+    font-size: clamp(1.19rem, 5.1vw, 1.445rem);
     text-align: right;
   }
 }

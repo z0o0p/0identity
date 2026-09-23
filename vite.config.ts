@@ -7,9 +7,13 @@ export default defineConfig(({ command, mode }) => ({
   plugins: [
     react(),
     cloudflare({
-      configPath: mode === "offline" || (command === "serve" && mode !== "ai")
-        ? "./wrangler.local.jsonc"
-        : "./wrangler.jsonc",
+      config: (config) => {
+        if (mode === "offline" || (command === "serve" && mode !== "ai")) {
+          // Workers AI has no local emulator; ordinary development stays offline.
+          config.name = "0identity-local";
+          config.ai = undefined;
+        }
+      },
     }),
     agents(),
   ],

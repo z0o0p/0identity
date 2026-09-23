@@ -8,11 +8,13 @@ import { HUMAN_COMPONENT_NAMES } from "../../src/shared/domain";
 interface SessionInspectorProps {
   session: SessionDetailResponse;
   relatedSessions: SessionListResponse["sessions"];
+  onSelectSession: (session: SessionListResponse["sessions"][number]) => void;
 }
 
 export function SessionInspector({
   session,
   relatedSessions,
+  onSelectSession,
 }: SessionInspectorProps) {
   const { assessment, signals } = session;
   const identity = assessment.identity;
@@ -23,15 +25,8 @@ export function SessionInspector({
     <section
       className={styles["inspector-panel"]}
       data-evidence-panel
-      aria-labelledby="inspector-title"
+      aria-label="Session evidence"
     >
-      <div className={styles["panel-heading"]}>
-        <div>
-          <h3 id="inspector-title">Selected session</h3>
-        </div>
-        <code>{session.sessionId}</code>
-      </div>
-
       <div className={styles["inspector-summary"]}>
         <div>
           <strong>{session.humanScore.toFixed(1)}</strong>
@@ -65,8 +60,8 @@ export function SessionInspector({
                 <div key={name}>
                   <dt>{name}</dt>
                   <dd>
-                    {component.score.toFixed(1)} ·{" "}
-                    {Math.round(component.confidence * 100)}% confidence ·{" "}
+                    {component.score.toFixed(1)},{" "}
+                    {Math.round(component.confidence * 100)}% confidence,{" "}
                     {component.evidenceCount} signals
                   </dd>
                 </div>
@@ -80,7 +75,7 @@ export function SessionInspector({
             <ul className={styles["plain-list"]}>
               {assessment.human.flags.map((flag) => (
                 <li key={flag.code}>
-                  {flag.code} · {flag.severity}
+                  {flag.code}, {flag.severity}
                 </li>
               ))}
             </ul>
@@ -97,7 +92,7 @@ export function SessionInspector({
                 <div key={item.evidenceClass}>
                   <dt>{item.evidenceClass}</dt>
                   <dd>
-                    {Math.round(item.similarity * 100)}% similar ·{" "}
+                    {Math.round(item.similarity * 100)}% similar,{" "}
                     {item.comparableFeatures} comparable features
                   </dd>
                 </div>
@@ -115,14 +110,14 @@ export function SessionInspector({
               <dt>Environment</dt>
               <dd>
                 {environment
-                  ? `${environment.browserFamily} · ${environment.platformFamily}`
+                  ? `${environment.browserFamily}, ${environment.platformFamily}`
                   : "Unavailable"}
               </dd>
             </div>
             <div>
               <dt>Locale / timezone</dt>
               <dd>
-                {environment?.locale ?? "—"} · {environment?.timezone ?? "—"}
+                {environment?.locale ?? "—"}, {environment?.timezone ?? "—"}
               </dd>
             </div>
             <div>
@@ -156,10 +151,12 @@ export function SessionInspector({
             <p>No related sessions were found.</p>
           ) : (
             <ul className={styles["plain-list"]}>
-              {relatedSessions.map((related) => (
+              {relatedSessions.slice(0, 5).map((related) => (
                 <li key={related.sessionId}>
-                  <code>{related.sessionId}</code> · {related.matchStatus} ·{" "}
-                  {related.humanScore.toFixed(1)}/10
+                  <button type="button" className={styles["related-session"]}
+                    onClick={() => onSelectSession(related)}>
+                    <code>{related.sessionId}</code>
+                  </button>
                 </li>
               ))}
             </ul>

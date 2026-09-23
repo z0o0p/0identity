@@ -1,5 +1,6 @@
+import { sessionIdentifierSchema } from "../api/history";
 import { AIChatAgent, type ChatResponseResult } from "@cloudflare/ai-chat";
-import { convertToModelMessages, stepCountIs, streamText } from "ai";
+import { convertToModelMessages, stepCountIs, streamText, type ToolSet } from "ai";
 import { createWorkersAI } from "workers-ai-provider";
 import { DurableHistoryService } from "../storage/durable-history-service";
 import {
@@ -28,13 +29,25 @@ export class InvestigationAgent extends AIChatAgent<Cloudflare.Env> {
       return Response.json({ error: "Workers AI is not enabled in this environment." }, { status: 503 });
     }
 
+    const attachedSession = options?.body?.sessionId;
+    const context = sessionIdentifierSchema.nullable().safeParse(attachedSession ?? null);
+    if (!context.success) {
+      return Response.json({ error: "Session context is invalid." }, { status: 400 });
+    }
+    const messages = await convertToModelMessages(this.messages);
+    if (!scope.sessionId) {
+      messages.push({ role: "user", content: context.data
+        ? `Context for this turn: attached session ${context.data}. Retrieve its stored evidence before drawing conclusions.`
+        : "Context for this turn: no session attached. Discover sessions if needed for my request." });
+    }
     const history = new DurableHistoryService(this.env);
     const workersAi = createWorkersAI({ binding: this.env.AI });
+    const tools: ToolSet = createInvestigationAiTools(history, scope.namespace, history);
     const result = streamText({
       model: workersAi(INVESTIGATION_MODEL, { safePrompt: true, reasoning_effort: "low" }),
       system: investigationSystemPrompt(scope),
-      messages: await convertToModelMessages(this.messages),
-      tools: createInvestigationAiTools(history, scope.namespace),
+      messages,
+      tools,
       stopWhen: stepCountIs(MAX_INVESTIGATION_STEPS),
       ...(options?.abortSignal ? { abortSignal: options.abortSignal } : {}),
       onFinish,

@@ -1,5 +1,7 @@
+import { z } from "zod";
+import { sessionSummarySchema } from "../api/history";
 import { tool, type ToolSet, type UIMessage } from "ai";
-import type { AssessmentHistoryReader, HistoryNamespace } from "../storage/types";
+import type { AssessmentHistoryReader, AssessmentHistoryService, HistoryNamespace } from "../storage/types";
 import {
   InvestigationTools,
   compareSessionsToolInputSchema,
@@ -28,7 +30,11 @@ export function hasValidInvestigationQuestion(messages: readonly UIMessage[]): b
 export function investigationSystemPrompt(scope: InvestigationScope): string {
   return `You are the read-only investigation assistant for 0identity.
 
-The selected session is ${scope.sessionId} in the ${scope.source} data source.
+${scope.sessionId ? `The selected session is ${scope.sessionId}` : "No session is selected by default"} in the ${scope.source} data source.
+The latest context message identifies any session attached for this turn; earlier attachments are historical context.
+Act as an investigator: discover relevant sessions, inspect evidence, follow related subject history when useful, and report findings with session IDs and uncertainty.
+When no session is attached, use listSessions to discover recent sessions for investigation requests. Ask a focused question only if the task remains ambiguous.
+Use multiple tools as needed within the step budget. Report incomplete investigations honestly.
 
 Rules:
 - Use the evidence tools before making any factual claim about a session, assessment, or anonymous subject.
@@ -46,9 +52,19 @@ Rules:
 export function createInvestigationAiTools(
   history: AssessmentHistoryReader,
   namespace: HistoryNamespace,
+  discovery?: Pick<AssessmentHistoryService, "listSessions">,
 ) {
   const evidence = new InvestigationTools(history, namespace);
   return {
+    ...(discovery ? {
+      listSessions: tool({
+        description: "Discover recent sessions in the current data source. Results are bounded; use session tools to investigate evidence.",
+        inputSchema: z.object({ limit: z.number().int().min(1).max(15).default(10) }).strict(),
+        execute: async ({ limit }) => ({
+          sessions: z.array(sessionSummarySchema).max(15).parse(await discovery.listSessions(namespace, limit)),
+        }),
+      }),
+    } : {}),
     getAssessment: tool({
       description: "Get the stored human-likelihood and identity-continuity assessment for a session.",
       inputSchema: sessionToolInputSchema,

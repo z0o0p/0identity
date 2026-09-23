@@ -40,6 +40,19 @@ describe("Investigation Agent boundary", () => {
     });
   });
 
+  it("supports a dashboard investigation without selected context", async () => {
+    expect(parseInvestigationAgentName(investigationAgentName("live"))).toEqual({
+      source: "live", namespace: "live-v1", sessionId: null,
+    });
+    const history = new MemoryHistoryService();
+    const list = vi.spyOn(history, "listSessions");
+    const tools = createInvestigationAiTools(history, "simulation-v1", history);
+    expect(await tools.listSessions!.execute({ limit: 5 }, {
+      toolCallId: "discover", messages: [], context: {},
+    })).toEqual({ sessions: [] });
+    expect(list).toHaveBeenCalledWith("simulation-v1", 5);
+  });
+
   it.each([
     "simulation__invalid",
     "other__sess_valid",

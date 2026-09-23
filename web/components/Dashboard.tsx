@@ -9,14 +9,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { DashboardOverview } from "../../src/api/dashboard";
 import type {
   SessionDetailResponse,
   SessionListResponse,
 } from "../../src/api/history";
 import type { HistorySource } from "../../src/storage/types";
 import {
-  getDashboardOverview,
   getDashboardSession,
   getDashboardSessions,
   getSubjectSessions,
@@ -26,7 +24,6 @@ import {
   type ContinuityFilter,
   type HumanFilter,
 } from "../lib/session-filters";
-import { OverviewCards } from "./OverviewCards";
 import { SessionInspector } from "./SessionInspector";
 import { useContentMotion } from "../hooks/motion";
 
@@ -41,14 +38,6 @@ interface DashboardProps {
 
 type SessionSummary = SessionListResponse["sessions"][number];
 const SESSION_BATCH_SIZE = 15;
-
-const EMPTY_OVERVIEW: DashboardOverview = {
-  totalSessions: 0,
-  likelyHumanSessions: 0,
-  suspiciousSessions: 0,
-  anonymousSubjects: 0,
-  uncertainMatches: 0,
-};
 
 function displayTime(value: string): string {
   return new Date(value).toLocaleString(undefined, {
@@ -97,7 +86,6 @@ function FlagIcon({ code }: { code: string }) {
 
 export function Dashboard({ refreshKey }: DashboardProps) {
   const [source, setSource] = useState<HistorySource>("simulation");
-  const [overview, setOverview] = useState(EMPTY_OVERVIEW);
   const [sessions, setSessions] = useState<SessionListResponse["sessions"]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -112,6 +100,7 @@ export function Dashboard({ refreshKey }: DashboardProps) {
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
+  const [detailStatus, setDetailStatus] = useState<"idle" | "loading" | "error">("idle");
   const detailRequest = useRef<AbortController | undefined>(undefined);
   const listRequest = useRef<AbortController | undefined>(undefined);
   const loadMoreTarget = useRef<HTMLDivElement>(null);
@@ -129,18 +118,14 @@ export function Dashboard({ refreshKey }: DashboardProps) {
     detailRequest.current?.abort();
     listRequest.current?.abort();
     setStatus("loading");
-    setOverview(EMPTY_OVERVIEW);
     setSessions([]);
     setHasMore(false);
     setLoadingMore(false);
     setSelected(undefined);
+    setDetailStatus("idle");
     setRelatedSessions([]);
-    void Promise.all([
-      getDashboardOverview(source, controller.signal),
-      getDashboardSessions(source, controller.signal),
-    ])
-      .then(([nextOverview, nextSessions]) => {
-        setOverview(nextOverview);
+    void getDashboardSessions(source, controller.signal)
+      .then((nextSessions) => {
         setSessions(nextSessions);
         setHasMore(nextSessions.length === SESSION_BATCH_SIZE);
         setStatus("ready");
@@ -202,14 +187,19 @@ export function Dashboard({ refreshKey }: DashboardProps) {
     "[data-evidence-panel]",
     [selected],
   );
-  const overviewMotion = useContentMotion<HTMLDivElement>("[data-metric]", [
-    overview,
-  ]);
+  const chatSection = useRef<HTMLElement>(null);
 
   async function inspectSession(session: SessionSummary) {
+    chatSection.current?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      block: "start",
+    });
     detailRequest.current?.abort();
     const controller = new AbortController();
     detailRequest.current = controller;
+    setSelected(undefined);
+    setRelatedSessions([]);
+    setDetailStatus("loading");
     try {
       const detail = await getDashboardSession(
         session.sessionId,
@@ -219,10 +209,12 @@ export function Dashboard({ refreshKey }: DashboardProps) {
       const related = detail.subjectId
         ? await getSubjectSessions(detail.subjectId, source, controller.signal)
         : [];
+      if (controller.signal.aborted) return;
+      setDetailStatus("idle");
       setSelected(detail);
       setRelatedSessions(related);
     } catch {
-      if (!controller.signal.aborted) setStatus("error");
+      if (!controller.signal.aborted) setDetailStatus("error");
     }
   }
 
@@ -230,14 +222,62 @@ export function Dashboard({ refreshKey }: DashboardProps) {
     <section className={styles["dashboard"]} aria-labelledby="dashboard-title">
       <div className={styles["dashboard-heading"]}>
         <div>
-          <h1 id="dashboard-title">Session Dashboard</h1>
+          <h1 id="dashboard-title">Investigation Dashboard</h1>
           <p>Review session scores, subject continuity, and flagged behaviour.</p>
         </div>
       </div>
 
-      <div ref={overviewMotion}>
-        <OverviewCards overview={overview} />
-      </div>
+      <section ref={chatSection} className={styles["investigation-section"]} aria-label="Session investigation">
+        <div className={styles["investigation-layout"]}>
+          <Suspense fallback={<p className={styles["dashboard-message"]}>Loading investigation agent…</p>}>
+            <InvestigationChat key={source} source={source} sessionId={selected?.sessionId} />
+          </Suspense>
+          <div className={styles["session-context"]}>
+            <label className={styles["session-picker"]}>
+              <span className={styles["session-subheader"]}>Session</span>
+              <select
+                value={selected?.sessionId ?? ""}
+                onChange={(event) => {
+                  const session = sessions.find((item) => item.sessionId === event.target.value);
+                  if (session) void inspectSession(session);
+                  else {
+                    detailRequest.current?.abort();
+                    setSelected(undefined);
+                    setRelatedSessions([]);
+                    setDetailStatus("idle");
+                  }
+                }}
+                disabled={sessions.length === 0}
+              >
+                <option value="">No session attached</option>
+                {selected && !sessions.some((session) => session.sessionId === selected.sessionId) && (
+                  <option value={selected.sessionId}>{selected.sessionId}</option>
+                )}
+                {sessions.map((session) => (
+                  <option key={session.sessionId} value={session.sessionId}>
+                    {session.sessionId}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div ref={panelsMotion} aria-busy={detailStatus === "loading"}>
+              {detailStatus === "loading" ? (
+                <p className={styles["dashboard-message"]} role="status">Loading session evidence…</p>
+              ) : detailStatus === "error" ? (
+                <p className={styles["dashboard-message"]} role="alert">
+                  Session evidence is temporarily unavailable. Select a session to try again.
+                </p>
+              ) : selected ? (
+                <SessionInspector session={selected} relatedSessions={relatedSessions} onSelectSession={(session) => void inspectSession(session)} />
+              ) : (
+                <p className={styles["dashboard-message"]}>
+                  Attach a session from this selector or the results table to add evidence to your investigation. You can also ask the agent to find sessions.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className={styles["session-browser"]}>
         <div className={styles["filter-bar"]}>
@@ -317,7 +357,15 @@ export function Dashboard({ refreshKey }: DashboardProps) {
                   >
                     <td><time dateTime={session.createdAt}>{displayTime(session.createdAt)}</time></td>
                     <td>
-                      <code>{session.sessionId}</code>
+                      <button
+                        type="button"
+                        className={styles["session-link"]}
+                        onClick={() => void inspectSession(session)}
+                        aria-pressed={selected?.sessionId === session.sessionId}
+                        aria-label={`Investigate ${session.sessionId}`}
+                      >
+                        <code>{session.sessionId}</code>
+                      </button>
                     </td>
                     <td>
                       <code>{session.subjectId ?? "—"}</code>
@@ -367,29 +415,7 @@ export function Dashboard({ refreshKey }: DashboardProps) {
         )}
       </div>
 
-      <div ref={panelsMotion}>
-        {selected && (
-          <>
-            <SessionInspector
-              session={selected}
-              relatedSessions={relatedSessions}
-            />
-            <Suspense
-              fallback={
-                <p className={styles["dashboard-message"]}>
-                  Loading investigation assistant…
-                </p>
-              }
-            >
-              <InvestigationChat
-                key={`${source}:${selected.sessionId}`}
-                source={source}
-                sessionId={selected.sessionId}
-              />
-            </Suspense>
-          </>
-        )}
-      </div>
+
     </section>
   );
 }

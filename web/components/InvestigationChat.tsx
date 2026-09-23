@@ -1,4 +1,5 @@
 import styles from "./InvestigationChat.module.css";
+import { isToolUIPart, getToolName } from "ai";
 import { useState, type FormEvent } from "react";
 import { useAgentChat } from "@cloudflare/ai-chat/react";
 import { useAgent } from "agents/react";
@@ -11,7 +12,7 @@ import { useContentMotion } from "../hooks/motion";
 
 interface InvestigationChatProps {
   source: HistorySource;
-  sessionId: string;
+  sessionId?: string | undefined;
 }
 
 function messageText(
@@ -30,7 +31,7 @@ export function InvestigationChat({
   const [input, setInput] = useState("");
   const agent = useAgent({
     agent: "InvestigationAgent",
-    name: investigationAgentName(source, sessionId),
+    name: investigationAgentName(source),
   });
   const {
     messages,
@@ -52,7 +53,7 @@ export function InvestigationChat({
     const prompt = input.trim();
     if (!prompt || busy) return;
     setInput("");
-    void sendMessage({ text: prompt });
+    void sendMessage({ text: prompt }, { body: { sessionId: sessionId ?? null } });
   }
 
   return (
@@ -68,7 +69,7 @@ export function InvestigationChat({
         ].join(" ")}
       >
         <div>
-          <h3 id="investigation-title">Ask about this session</h3>
+          <h3 id="investigation-title">Investigation agent</h3>
         </div>
         {messages.length > 0 && (
           <button
@@ -85,11 +86,13 @@ export function InvestigationChat({
       <div className={styles["investigation-messages"]} aria-live="polite">
         {messages.length === 0 ? (
           <div className={styles["investigation-empty"]}>
-            <p>No messages yet.</p>
+            <p>Trace suspicious activity, inspect score evidence, or compare anonymous subject continuity.</p>
+            <p>I can find sessions and follow the evidence using read-only investigation tools.</p>
           </div>
         ) : (
           messages.map((message) => {
             const text = messageText(message.parts);
+            const toolParts = message.parts.filter(isToolUIPart);
             if (!text && message.role !== "assistant") return null;
             return (
               <article
@@ -100,7 +103,19 @@ export function InvestigationChat({
                 ].join(" ")}
               >
                 <strong>{message.role === "user" ? "You" : "0identity"}</strong>
-                <p>{text || "Reviewing structured evidence…"}</p>
+                {toolParts.length > 0 && (
+                  <ul className={styles["tool-activity"]} aria-label="Investigation activity">
+                    {toolParts.map((part) => (
+                      <li key={part.toolCallId}>
+                        <span>{getToolName(part).replace(/([A-Z])/g, " $1")}</span>
+                        <strong>{part.state === "output-available" ? "Complete"
+                          : part.state === "output-error" ? "Failed"
+                          : part.state === "output-denied" ? "Denied" : "Working…"}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {text && <p>{text}</p>}
               </article>
             );
           })
@@ -122,26 +137,34 @@ export function InvestigationChat({
         )}
       </div>
 
+      <div className={styles["investigation-actions"]} aria-label="Investigation shortcuts">
+        {(sessionId
+          ? ["Investigate this session", "Explain its risk flags", "Compare with related sessions"]
+          : ["Investigate recent suspicious sessions", "Review uncertain continuity matches"]
+        ).map((task) => (
+          <button key={task} type="button" disabled={busy}
+            onClick={() => void sendMessage({ text: task }, { body: { sessionId: sessionId ?? null } })}>
+            {task}
+          </button>
+        ))}
+      </div>
       <form className={styles["investigation-form"]} onSubmit={submit}>
-        <label htmlFor={`investigation-${sessionId}`}>
-          Question about <code>{sessionId}</code>
-        </label>
         <div>
           <textarea
-            id={`investigation-${sessionId}`}
+            id="investigation-question"
+            aria-label="Investigation request"
             value={input}
             onChange={(event) => setInput(event.target.value)}
             maxLength={MAX_INVESTIGATION_QUESTION_CHARS}
-            rows={3}
-            placeholder="Ask about scores, flags, continuity evidence, or related sessions"
-            disabled={busy}
+            rows={2}
+            placeholder="Describe what you want to investigate…"
           />
           <button
             type={busy ? "button" : "submit"}
             onClick={busy ? () => stop() : undefined}
             disabled={!busy && !input.trim()}
           >
-            {busy ? "Stop" : "Ask"}
+            {busy ? "Stop" : "Investigate"}
           </button>
         </div>
       </form>

@@ -91,7 +91,7 @@ describe("redesigned application navigation", () => {
     await mount("#/simulator");
     expect(element("h1").textContent).toBe("Simulator");
     expect(element('nav [aria-current="page"]').textContent).toBe("SIMULATOR");
-    expect(element("#simulator-title").textContent).toBe("Simulator");
+    expect(element('section[aria-label="Simulator"] h1').textContent).toBe("Simulator");
     await navigate("#/faqs");
     expect(queryAll(".faq-item")).toHaveLength(7);
     expect(queryAll("main a")).toHaveLength(0);
@@ -107,13 +107,13 @@ describe("redesigned application navigation", () => {
     await mount();
     expect(element("h1").textContent).toBe("ARE YOU human?");
     expect(
-      queryAll("main a, main button:not(.motion-toggle), .eyebrow"),
+      queryAll("main a, main button, .eyebrow"),
     ).toHaveLength(0);
     expect(
       element(".signal-illustration").getAttribute("aria-label"),
     ).toContain("not live results");
     expect(queryAll(".wordmark")).toHaveLength(1);
-    expect(element('nav a[href="/"]').textContent?.trim()).toBe("HOME");
+    expect(element('nav a[href="#/"]').textContent?.trim()).toBe("HOME");
     expect(element(".hero-description").textContent).toContain(
       "anonymous subject",
     );
@@ -184,7 +184,7 @@ describe("redesigned application navigation", () => {
     await act(async () =>
       element<HTMLButtonElement>(".run-assessment").click(),
     );
-    expect(element(".result").textContent).toContain("Synthetic data");
+    expect(element('[role="region"][aria-label="Simulation results"] .result h2').textContent).toBe("Human visitor");
     expect(element(".identity-result").textContent).toContain(
       "0% continuity confidence",
     );
@@ -228,21 +228,28 @@ describe("redesigned application navigation", () => {
     const random = vi.spyOn(Math, "random").mockReturnValue(0.2);
     const bar = element(".signal-mini-bars i");
     loop.totalTime(loop.duration());
+    const firstTransition = gsap.getTweensOf(bar)[0];
+    expect(firstTransition).toBeDefined();
+    firstTransition!.progress(1);
     const firstHeight = gsap.getProperty(bar, "scaleY");
+    expect(Number(firstHeight)).toBeCloseTo(0.4);
     random.mockReturnValue(0.8);
     loop.totalTime(loop.duration() * 2 + loop.repeatDelay());
-    expect(gsap.getProperty(bar, "scaleY")).not.toBe(firstHeight);
+    const nextTransition = gsap.getTweensOf(bar)[0];
+    expect(nextTransition).toBeDefined();
+    expect(nextTransition).not.toBe(firstTransition);
+    expect(gsap.getProperty(bar, "scaleY")).toBe(firstHeight);
+    nextTransition!.progress(1);
+    expect(Number(gsap.getProperty(bar, "scaleY"))).toBeCloseTo(0.85);
     loop.totalTime(0.01);
-    expect(Number(gsap.getProperty(bar, "scaleY"))).toBeCloseTo(0.08);
+    expect(Number(gsap.getProperty(bar, "scaleY"))).toBeCloseTo(0.85);
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
     random.mockRestore();
-    await act(async () => element<HTMLButtonElement>(".motion-toggle").click());
-    expect(loop.paused()).toBe(true);
-    expect(element(".motion-toggle").textContent).toBe("Resume animation");
-    await act(async () => element<HTMLButtonElement>(".motion-toggle").click());
-    expect(loop.paused()).toBe(false);
+    loop.totalTime(loop.duration());
+    expect(gsap.getTweensOf(bar).length).toBeGreaterThan(0);
     await navigate("#/faqs");
     expect(gsap.getTweensOf(packet)).toHaveLength(0);
+    expect(gsap.getTweensOf(bar)).toHaveLength(0);
     await navigate("#/");
     const nextPacket = element(".flow-packet");
     expect(gsap.getTweensOf(nextPacket).length).toBeGreaterThan(0);

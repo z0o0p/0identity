@@ -32,7 +32,6 @@ export default defineConfig({
   },
   test: {
     include: ["tests/**/*.test.ts", "web/**/*.test.ts"],
-    environment: "node",
     css: { include: /\.module\.css$/ },
   },
 });

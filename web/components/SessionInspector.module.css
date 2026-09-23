@@ -29,7 +29,7 @@
   color: var(--color-light);
   display: grid;
   gap: 1px;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .inspector-summary>div {
@@ -144,5 +144,25 @@
 }
 
 .inspector-summary strong {
-  font-size: clamp(3.5rem, 3.75vw, 6rem);
+  font-size: clamp(2.5rem, 2.7vw, 4.3rem);
+}
+.inspector-columns { grid-template-columns: minmax(0, 1fr); }
+.inspector-columns>section:nth-child(odd) { border-right: 0; }
+
+.inspector-columns h4 {
+  font-family: var(--font-subheader);
+  font-size: 0.875rem;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.related-session {
+  background: transparent;
+  border: 0;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
 }
